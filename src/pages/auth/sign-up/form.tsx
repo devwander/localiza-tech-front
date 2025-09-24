@@ -35,19 +35,19 @@ export function Form() {
         onSubmit={handleSubmit((data) => signup(data))}
       >
         <div>
-          <img src="logo-localiza.jpg" alt="" className="h-[150px] w-[150px]" />
+          <img src="logo-localiza.png" alt="" className="h-[150px] w-[150px]" />
         </div>
         <div className="mgt-[10px] mb-[20px] text-center">
-          <p>Crie sua conta para acessar centros comerciais e eventos</p>
+          <p>Junte-se a nossa comunidade de acessibilidade</p>
         </div>
 
         {/* Campo Nome */}
         <div className="flex flex-col gap-[5px]">
-          <label htmlFor="Nome">Nome</label>
+          <label htmlFor="Nome">Nome Completo</label>
           <input
             type="text"
-            placeholder="Digite seu nome"
-            className={`border border-gray-300 rounded-md p-2 w-[300px] ${
+            placeholder="Digite seu nome completo"
+            className={`border border-gray-300 rounded-lg p-2 w-[300px] ${
               errors.name
                 ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                 : "border-gray-300 focus:border-[#88A0BF] focus:ring-[#88A0BF]"
@@ -67,7 +67,7 @@ export function Form() {
           <input
             type="text"
             placeholder="Digite seu e-mail"
-            className={`border border-gray-300 rounded-md p-2 w-[300px] ${
+            className={`border border-gray-300 rounded-lg p-2 w-[300px] ${
               errors.email
                 ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                 : "border-gray-300 focus:border-[#88A0BF] focus:ring-[#88A0BF]"
@@ -86,8 +86,28 @@ export function Form() {
           <label htmlFor="Senha">Senha</label>
           <input
             type="password"
-            placeholder="Digite sua senha"
-            className={`border border-gray-300 rounded-md p-2 w-[300px]  ${
+            placeholder="Crie sua senha"
+            className={`border border-gray-300 rounded-lg p-2 w-[300px]  ${
+              errors.password
+                ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                : "border-gray-300 focus:border-[#88A0BF] focus:ring-[#88A0BF]"
+            }`}
+            {...register("password")}
+          />
+          {errors.password && (
+            <span className="text-sm text-red-600 pl-1">
+              {errors.password.message}
+            </span>
+          )}
+        </div>
+
+        {/* Campo Senha */}
+        <div className="flex flex-col gap-[5px]">
+          <label htmlFor="Senha">Confirme sua senha</label>
+          <input
+            type="password"
+            placeholder="Confirme sua senha sua senha"
+            className={`border border-gray-300 rounded-lg p-2 w-[300px]  ${
               errors.password
                 ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                 : "border-gray-300 focus:border-[#88A0BF] focus:ring-[#88A0BF]"
@@ -105,14 +125,20 @@ export function Form() {
           <button
             type="submit"
             disabled={isPending}
-            className="bg-[#228B22] text-white rounded-lg p-2 w-[300px] mt-[10px] mb-[20px]"
+            className="bg-[#1E90FF] text-white rounded-lg p-2 w-[300px] mt-[10px] mb-[20px]"
           >
             {isPending ? "Criando conta..." : "Criar conta"}
           </button>
         </div>
-
+        <div className=" flex gap-[5px]">
+          <p>OU</p>
+        </div>
         <div>
-          <a href="/login" className="text-[#1E90FF] hover:underline">
+          <a 
+          href="/sign-in" 
+          className="text-[#1E90FF] hover:underline"
+          onClick={() => navigate("/sign-in")}
+            >
             Já tenho uma conta
           </a>
         </div>

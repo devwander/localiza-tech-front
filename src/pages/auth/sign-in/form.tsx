@@ -37,7 +37,7 @@ export function Form() {
         onSubmit={handleSubmit((data) => signin(data))}
       >
         <div>
-          <img src="logo-localiza.jpg" alt="" className="h-[150px] w-[150px]" />
+          <img src="logo-localiza.png" alt="" className="h-[150px] w-[150px]" />
         </div>
         <div className="mgt-[10px] mb-[20px] text-center">
           <p>Acessibilidade para centros comerciais e eventos</p>
@@ -47,7 +47,7 @@ export function Form() {
           <input
             type="text"
             placeholder="Digite seu e-mail"
-            className={`border border-gray-300 rounded-md p-2 w-[300px] ${
+            className={`border border-gray-300 rounded-lg p-2 w-[300px] ${
               errors.email
                 ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                 : "border-gray-300 focus:border-[#88A0BF] focus:ring-[#88A0BF]"
@@ -66,7 +66,7 @@ export function Form() {
           <input
             type="text"
             placeholder="Digite sua senha"
-            className={`border border-gray-300 rounded-md p-2 w-[300px]  ${
+            className={`border border-gray-300 rounded-lg p-2 w-[300px]  ${
               errors.password
                 ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                 : "border-gray-300 focus:border-[#88A0BF] focus:ring-[#88A0BF]"
