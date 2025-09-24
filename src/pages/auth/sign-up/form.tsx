@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { useSigninMutation } from "../../../mutation";
+import { useSignupMutation } from "../../../mutation";
 import { authStore } from "../../../store";
-import { SigninSchema, type SigninType } from "./schemas";
+import { SignupSchema, type SignupType } from "./schemas";
 
 export function Form() {
   const navigate = useNavigate();
@@ -12,20 +12,18 @@ export function Form() {
     formState: { errors },
     handleSubmit,
     setError,
-  } = useForm<SigninType>({
-    resolver: zodResolver(SigninSchema),
+  } = useForm<SignupType>({
+    resolver: zodResolver(SignupSchema),
   });
 
   const { authenticate } = authStore();
 
-  const { mutateAsync: signin, isPending } = useSigninMutation({
+  const { mutateAsync: signup, isPending } = useSignupMutation({
     onError() {
-      setError("email", { message: "Email or password is incorrect" });
-      setError("password", { message: "Email or password is incorrect" });
+      setError("email", { message: "E-mail já cadastrado ou inválido" });
     },
     onSuccess: async ({ token: { token } }) => {
       authenticate(token);
-
       navigate("/");
     },
   });
@@ -34,14 +32,36 @@ export function Form() {
     <div className="flex min-h-screen justify-center items-center bg-[#fff]">
       <form
         className="flex flex-col items-center gap-[10px]"
-        onSubmit={handleSubmit((data) => signin(data))}
+        onSubmit={handleSubmit((data) => signup(data))}
       >
         <div>
           <img src="logo-localiza.jpg" alt="" className="h-[150px] w-[150px]" />
         </div>
         <div className="mgt-[10px] mb-[20px] text-center">
-          <p>Acessibilidade para centros comerciais e eventos</p>
+          <p>Crie sua conta para acessar centros comerciais e eventos</p>
         </div>
+
+        {/* Campo Nome */}
+        <div className="flex flex-col gap-[5px]">
+          <label htmlFor="Nome">Nome</label>
+          <input
+            type="text"
+            placeholder="Digite seu nome"
+            className={`border border-gray-300 rounded-md p-2 w-[300px] ${
+              errors.name
+                ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                : "border-gray-300 focus:border-[#88A0BF] focus:ring-[#88A0BF]"
+            }`}
+            {...register("name")}
+          />
+          {errors.name && (
+            <span className="text-sm text-red-600 pl-1">
+              {errors.name.message}
+            </span>
+          )}
+        </div>
+
+        {/* Campo Email */}
         <div className="flex flex-col gap-[5px]">
           <label htmlFor="E-mail">E-mail</label>
           <input
@@ -56,15 +76,16 @@ export function Form() {
           />
           {errors.email && (
             <span className="text-sm text-red-600 pl-1">
-              {" "}
               {errors.email.message}
             </span>
           )}
         </div>
+
+        {/* Campo Senha */}
         <div className="flex flex-col gap-[5px]">
           <label htmlFor="Senha">Senha</label>
           <input
-            type="text"
+            type="password"
             placeholder="Digite sua senha"
             className={`border border-gray-300 rounded-md p-2 w-[300px]  ${
               errors.password
@@ -73,37 +94,26 @@ export function Form() {
             }`}
             {...register("password")}
           />
+          {errors.password && (
+            <span className="text-sm text-red-600 pl-1">
+              {errors.password.message}
+            </span>
+          )}
         </div>
-        {errors.password && (
-          <span className="text-sm text-red-600 pl-1">
-            {" "}
-            {errors.password.message}
-          </span>
-        )}
+
         <div>
           <button
             type="submit"
             disabled={isPending}
-            className="bg-[#1E90FF] text-white rounded-lg p-2 w-[300px] mt-[10px] mb-[20px]"
+            className="bg-[#228B22] text-white rounded-lg p-2 w-[300px] mt-[10px] mb-[20px]"
           >
-            {isPending ? "Entrando..." : "Entrar"}
+            {isPending ? "Criando conta..." : "Criar conta"}
           </button>
         </div>
+
         <div>
-          <a href="#" className="text-[#1E90FF] ">
-            Esqueci minha senha
-          </a>
-        </div>
-        <div className="flex gap-[5px]">
-          <p>OU</p>
-        </div>
-        <div>
-          <a
-            href="#"
-            className="text-[#228B22]"
-            onClick={() => navigate("/sign-up")}
-          >
-            Criar conta
+          <a href="/login" className="text-[#1E90FF] hover:underline">
+            Já tenho uma conta
           </a>
         </div>
       </form>
