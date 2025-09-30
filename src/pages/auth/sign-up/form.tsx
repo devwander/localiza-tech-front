@@ -9,11 +9,12 @@ export function Form() {
   const navigate = useNavigate();
   const {
     register,
-    formState: { errors },
     handleSubmit,
     setError,
+    formState: { errors, isValid },
   } = useForm<SignupType>({
     resolver: zodResolver(SignupSchema),
+    mode: "onChange",
   });
 
   const { authenticate } = authStore();
@@ -32,7 +33,10 @@ export function Form() {
     <div className="flex min-h-screen justify-center items-center bg-[#fff]">
       <form
         className="flex flex-col items-center gap-[10px]"
-        onSubmit={handleSubmit((data) => signup(data))}
+        onSubmit={handleSubmit((data) => {
+          const { confirmPassword, ...payload } = data as any;
+          signup(payload);
+        })}
       >
         <div>
           <img src="logo-localiza.png" alt="" className="h-[150px] w-[150px]" />
@@ -101,22 +105,23 @@ export function Form() {
           )}
         </div>
 
-        {/* Campo Senha */}
+        {/* Campo Confirmação de Senha */}
         <div className="flex flex-col gap-[5px]">
-          <label htmlFor="Senha">Confirme sua senha</label>
+          <label htmlFor="confirmPassword">Confirme sua senha</label>
           <input
+            id="confirmPassword"
             type="password"
-            placeholder="Confirme sua senha sua senha"
+            placeholder="Confirme sua senha"
             className={`border border-gray-300 rounded-lg p-2 w-[300px]  ${
-              errors.password
+              errors.confirmPassword
                 ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                 : "border-gray-300 focus:border-[#88A0BF] focus:ring-[#88A0BF]"
             }`}
-            {...register("password")}
+            {...register("confirmPassword")}
           />
-          {errors.password && (
+          {errors.confirmPassword && (
             <span className="text-sm text-red-600 pl-1">
-              {errors.password.message}
+              {errors.confirmPassword.message}
             </span>
           )}
         </div>
@@ -124,8 +129,10 @@ export function Form() {
         <div>
           <button
             type="submit"
-            disabled={isPending}
-            className="bg-[#1E90FF] text-white rounded-lg p-2 w-[300px] mt-[10px] mb-[20px]"
+            disabled={isPending || !isValid}
+            className={`bg-[#1E90FF] text-white rounded-lg p-2 w-[300px] mt-[10px] mb-[20px] ${
+              isPending || !isValid ? "opacity-60 cursor-not-allowed" : ""
+            }`}
           >
             {isPending ? "Criando conta..." : "Criar conta"}
           </button>
