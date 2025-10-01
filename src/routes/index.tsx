@@ -1,22 +1,24 @@
 import { isAxiosError } from "axios";
-import { Suspense, useEffect, type ReactElement } from "react";
+import { lazy, Suspense, useEffect, type ReactElement } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { Loading } from "../components";
+import { ManagementDashboard } from "../layout";
 import { api } from "../lib";
 import { Signin } from "../pages/auth/sign-in";
 import { Signup } from "../pages/auth/sign-up";
 import { authStore } from "../store";
+import { Private } from "./private";
 import { Public } from "./public";
+
+export const MappingRequestsRouter = lazy(() =>
+  import("../pages/mapping/router").then((module) => ({
+    default: module.MappingRouter,
+  }))
+);
 
 export function Router(): ReactElement {
   const navigate = useNavigate();
   const { logged } = authStore.getState().load();
-
-  // useEffect(() => {
-  //   if (!logged) {
-  //     navigate("/sign-in", { replace: true });
-  //   }
-  // }, [logged, navigate]);
 
   useEffect(() => {
     const interceptorId = api.interceptors.response.use(
@@ -50,6 +52,18 @@ export function Router(): ReactElement {
             <Route index element={<Navigate to={"/sign-in"} />} />
             <Route path="sign-in/" element={<Signin />} />
             <Route path="sign-up/" element={<Signup />} />
+          </Route>
+        )}
+
+        {logged && (
+          <Route path="/" element={<Navigate to={"/mapping"} replace />} />
+        )}
+
+        {logged && (
+          <Route element={<Private />}>
+            <Route element={<ManagementDashboard />}>
+              <Route path="/mapping" element={<MappingRequestsRouter />} />
+            </Route>
           </Route>
         )}
       </Routes>
