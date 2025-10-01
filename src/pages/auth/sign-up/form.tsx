@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useSignupMutation } from "../../../mutation";
 import { authStore } from "../../../store";
 import { SignupSchema, type SignupType } from "./schemas";
@@ -22,8 +23,10 @@ export function Form() {
   const { mutateAsync: signup, isPending } = useSignupMutation({
     onError() {
       setError("email", { message: "E-mail já cadastrado ou inválido" });
+      toast.error("Erro ao cadastrar: e-mail já está em uso ou inválido");
     },
     onSuccess: async ({ token: { token } }) => {
+      toast.success("Cadastro realizado com sucesso");
       authenticate(token);
       navigate("/");
     },
