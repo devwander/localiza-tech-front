@@ -12,7 +12,7 @@ interface StoreAuth {
 export const authStore = create<StoreAuth>()(
   persist(
     (set, get) => ({
-      authentication: undefined,
+      token: undefined,
 
       authenticate: (token: string): void => {
         api.defaults.headers.common.Authorization = `Bearer ${token}`;
