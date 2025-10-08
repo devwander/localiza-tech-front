@@ -14,20 +14,20 @@ export function DebugPanel({
   if (!visible) return null;
 
   return (
-    <div className="p-4 bg-gray-50 border-t">
-      <h3 className="text-lg font-medium text-gray-900 mb-3">Debug Info</h3>
+    <div className="p-3 bg-gray-50 border-t">
+      <h3 className="text-sm font-semibold text-gray-900 mb-2">Debug Info</h3>
 
       <div className="space-y-2 text-xs font-mono">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <div className="text-gray-600">Mouse:</div>
-            <div>
+            <div className="text-gray-600 text-xs">Mouse:</div>
+            <div className="text-xs">
               {debugInfo.mousePos.x}, {debugInfo.mousePos.y}
             </div>
           </div>
           <div>
-            <div className="text-gray-600">Canvas:</div>
-            <div>
+            <div className="text-gray-600 text-xs">Canvas:</div>
+            <div className="text-xs">
               {Math.round(debugInfo.canvasPos.x)},{" "}
               {Math.round(debugInfo.canvasPos.y)}
             </div>
@@ -35,8 +35,8 @@ export function DebugPanel({
         </div>
 
         <div>
-          <div className="text-gray-600">Selecionado:</div>
-          <div>
+          <div className="text-gray-600 text-xs">Selecionado:</div>
+          <div className="text-xs">
             {selectedElement
               ? `${selectedElement.name} (${selectedElement.layer})`
               : "Nenhum"}
@@ -44,8 +44,8 @@ export function DebugPanel({
         </div>
 
         <div>
-          <div className="text-gray-600">Hit Test:</div>
-          <div className="max-h-20 overflow-y-auto">
+          <div className="text-gray-600 text-xs">Hit Test:</div>
+          <div className="max-h-16 overflow-y-auto text-xs">
             {debugInfo.lastHitTest.map((info, index) => (
               <div
                 key={index}

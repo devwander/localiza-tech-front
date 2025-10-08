@@ -21,14 +21,14 @@ export function Sidebar({
   onDeleteElement,
 }: SidebarProps) {
   return (
-    <div className="w-80 bg-white border-l shadow-sm flex flex-col">
+    <div className="w-72 lg:w-80 bg-white border-l shadow-sm flex flex-col overflow-hidden">
       {/* Painel de Camadas */}
-      <div className="border-b">
+      <div className="border-b flex-shrink-0">
         <LayersPanel layers={layers} selectedElement={selectedElement} />
       </div>
 
       {/* Painel de Propriedades */}
-      <div className="flex-1 border-b">
+      <div className="flex-1 border-b overflow-y-auto">
         <PropertiesPanel
           selectedElement={selectedElement}
           onUpdateElement={onUpdateElement}
@@ -38,7 +38,7 @@ export function Sidebar({
 
       {/* Painel de Debug */}
       {debugMode && (
-        <div className="h-48">
+        <div className="h-48 flex-shrink-0 overflow-y-auto">
           <DebugPanel
             debugInfo={debugInfo}
             selectedElement={selectedElement}

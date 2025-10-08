@@ -16,6 +16,12 @@ export const MappingRequestsRouter = lazy(() =>
   }))
 );
 
+export const MapsRouter = lazy(() =>
+  import("../pages/maps/router").then((module) => ({
+    default: module.MapsRouter,
+  }))
+);
+
 export function Router(): ReactElement {
   const navigate = useNavigate();
   const { logged } = authStore.getState().load();
@@ -56,12 +62,16 @@ export function Router(): ReactElement {
         )}
 
         {logged && (
-          <Route path="/" element={<Navigate to={"/mapping"} replace />} />
+          <Route
+            path="/"
+            element={<Navigate to={"/dashboard/maps"} replace />}
+          />
         )}
 
         {logged && (
           <Route element={<Private />}>
             <Route element={<ManagementDashboard />}>
+              <Route path="/dashboard/maps/*" element={<MapsRouter />} />
               <Route path="/mapping" element={<MappingRequestsRouter />} />
             </Route>
           </Route>

@@ -113,10 +113,26 @@ export class LayerUtils {
     elementId: number,
     updates: Partial<MapElement>
   ): MapLayers {
-    const updateInLayer = <T extends MapElement>(elements: T[]): T[] =>
-      elements.map((el) =>
-        el.id === elementId ? ({ ...el, ...updates } as T) : el
-      );
+    const updateInLayer = <T extends MapElement>(elements: T[]): T[] => {
+      const updated = elements.map((el) => {
+        if (el.id === elementId) {
+          const result = { ...el, ...updates } as T;
+          console.log(`[LayerUtils] Updating element ${el.id}:`, {
+            before: { x: el.x, y: el.y, width: el.width, height: el.height },
+            updates,
+            after: {
+              x: result.x,
+              y: result.y,
+              width: result.width,
+              height: result.height,
+            },
+          });
+          return result;
+        }
+        return el;
+      });
+      return updated;
+    };
 
     return {
       background: updateInLayer(layers.background),

@@ -54,7 +54,9 @@ export function FairMapper() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file && fairMapper.uploadBackgroundImage) {
-                      fairMapper.uploadBackgroundImage(file).catch(console.error);
+                      fairMapper
+                        .uploadBackgroundImage(file)
+                        .catch(console.error);
                     }
                     e.currentTarget.value = "";
                   }}
@@ -70,7 +72,9 @@ export function FairMapper() {
                   max={1}
                   step={0.05}
                   value={fairMapper.backgroundMeta?.opacity ?? 0.5}
-                  onChange={(e) => fairMapper.setBackgroundOpacity?.(Number(e.target.value))}
+                  onChange={(e) =>
+                    fairMapper.setBackgroundOpacity?.(Number(e.target.value))
+                  }
                   className="w-32"
                 />
                 <button
@@ -102,10 +106,6 @@ export function FairMapper() {
         currentLayer={fairMapper.currentLayer}
         onToolChange={fairMapper.setTool}
         onLayerChange={fairMapper.setDrawMode}
-        onUploadBackground={fairMapper.uploadBackgroundImage}
-        onSetBackgroundOpacity={fairMapper.setBackgroundOpacity}
-        onRemoveBackground={fairMapper.removeBackgroundImage}
-        backgroundOpacity={fairMapper.backgroundMeta?.opacity ?? 0.5}
       />
 
       {/* Main Content */}

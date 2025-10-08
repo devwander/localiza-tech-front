@@ -28,7 +28,13 @@ export class CanvasRenderer {
   private ctx: CanvasRenderingContext2D;
   private canvas: HTMLCanvasElement;
   private backgroundImage: HTMLImageElement | null = null;
-  private backgroundMeta: { opacity: number; x: number; y: number; width: number; height: number } | null = null;
+  private backgroundMeta: {
+    opacity: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -48,6 +54,13 @@ export class CanvasRenderer {
     debugMode: boolean = false,
     debugInfo?: DebugInfo
   ): void {
+    console.log("[CanvasRenderer] render called with:", {
+      background: layers.background.length,
+      submaps: layers.submaps.length,
+      locations: layers.locations.length,
+      selectedElement: selectedElement?.id,
+    });
+
     this.clearCanvas();
 
     // Draw background image first (if present)
@@ -258,12 +271,24 @@ export class CanvasRenderer {
   /**
    * Set background image and display meta
    */
-  setBackgroundImage(img: HTMLImageElement | null, meta?: { opacity: number; x: number; y: number; width: number; height: number }) {
+  setBackgroundImage(
+    img: HTMLImageElement | null,
+    meta?: {
+      opacity: number;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }
+  ) {
     this.backgroundImage = img;
     this.backgroundMeta = meta || null;
     // debug
-    // eslint-disable-next-line no-console
-    console.debug('[CanvasRenderer] setBackgroundImage', { hasImage: !!img, meta: this.backgroundMeta });
+
+    console.debug("[CanvasRenderer] setBackgroundImage", {
+      hasImage: !!img,
+      meta: this.backgroundMeta,
+    });
   }
 
   getBackgroundMeta() {

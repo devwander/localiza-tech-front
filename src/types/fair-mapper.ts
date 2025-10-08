@@ -249,6 +249,7 @@ export interface UseFairMapperReturn {
   // File operations
   saveMap: () => void;
   loadMap: (file: File) => Promise<void>;
+  loadLayers: (layers: MapLayers, nextId?: number, mapId?: string) => void;
 
   // Canvas operations
   render: () => void;
@@ -258,7 +259,12 @@ export interface UseFairMapperReturn {
   // Background image controls (optional)
   uploadBackgroundImage?: (file: File) => Promise<void>;
   setBackgroundOpacity?: (opacity: number) => void;
-  setBackgroundTransform?: (x: number, y: number, width: number, height: number) => void;
+  setBackgroundTransform?: (
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => void;
   removeBackgroundImage?: () => void;
   backgroundMeta?: BackgroundImageMeta | null;
 }

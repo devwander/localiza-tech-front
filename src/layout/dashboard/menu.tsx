@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiLogOut, FiMenu } from "react-icons/fi";
+import { FiLogOut, FiMap, FiMenu } from "react-icons/fi";
 import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { authStore } from "../../store/auth.store";
@@ -31,6 +31,16 @@ export function Menu() {
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-[200px] bg-white border rounded-lg shadow-lg z-50">
+          <div
+            className="px-4 py-3 cursor-pointer text-gray-700 hover:bg-gray-100 flex items-center justify-between border-b"
+            onClick={() => {
+              setIsOpen(false);
+              navigate("/dashboard/maps");
+            }}
+          >
+            <span>Meus Mapas</span>
+            <FiMap size={16} />
+          </div>
           <div
             className="px-4 py-3 cursor-pointer text-red-500 hover:bg-red-50 flex items-center justify-between"
             onClick={() => {
