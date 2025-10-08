@@ -1,3 +1,4 @@
+import { CheckIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -38,6 +39,7 @@ export function MapEditor() {
   const skipNextLayerChange = useRef(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Reset quando o ID mudar (navegação entre mapas)
   useEffect(() => {
@@ -166,6 +168,29 @@ export function MapEditor() {
     setShowExitModal(false);
   };
 
+  const handleShareMap = async () => {
+    if (!id || isNewMap) {
+      toast.warning("Salve o mapa antes de compartilhar");
+      return;
+    }
+
+    const publicUrl = `${window.location.origin}/maps/public/${id}`;
+
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setLinkCopied(true);
+      toast.success("Link público copiado!");
+
+      // Reset copied state after 2 seconds
+      setTimeout(() => {
+        setLinkCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      toast.error("Erro ao copiar link");
+    }
+  };
+
   if (isLoading && !isNewMap) {
     return <Loading />;
   }
@@ -283,6 +308,29 @@ export function MapEditor() {
                   <span className="ml-1.5 text-xs">⚠️</span>
                 )}
               </button>
+
+              {/* Share button */}
+              {!isNewMap && (
+                <button
+                  onClick={handleShareMap}
+                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  title="Compartilhar link público"
+                >
+                  {linkCopied ? (
+                    <>
+                      <CheckIcon className="w-4 h-4 mr-1.5 text-green-600" />
+                      <span className="hidden lg:inline text-green-600">
+                        Copiado!
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <ShareIcon className="w-4 h-4 mr-1.5" />
+                      <span className="hidden lg:inline">Compartilhar</span>
+                    </>
+                  )}
+                </button>
+              )}
 
               {/* Background image upload */}
               <label className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer transition-colors">

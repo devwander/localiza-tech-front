@@ -37,3 +37,13 @@ export const useMap = (id: string | undefined) => {
     refetchOnReconnect: "always",
   });
 };
+
+export const usePublicMap = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ["map", "public", id],
+    queryFn: () => Service.map.findPublic(id!),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // Cache por 5 minutos para mapas públicos
+    gcTime: 10 * 60 * 1000,
+  });
+};

@@ -63,6 +63,17 @@ export class CanvasRenderer {
 
     this.clearCanvas();
 
+    // Calculate bounding box and apply transform to center content
+    const allElements = [
+      ...layers.background,
+      ...layers.submaps,
+      ...layers.locations,
+    ];
+
+    if (allElements.length > 0) {
+      this.centerContent(allElements);
+    }
+
     // Draw background image first (if present)
     if (this.backgroundImage && this.backgroundMeta) {
       const { opacity, x, y, width, height } = this.backgroundMeta;
@@ -95,6 +106,53 @@ export class CanvasRenderer {
     if (debugMode && debugInfo) {
       this.drawDebugInfo(debugInfo);
     }
+
+    // Restore context after centering transformation
+    if (allElements.length > 0) {
+      this.ctx.restore();
+    }
+  }
+
+  /**
+   * Centraliza o conteúdo do mapa no canvas
+   */
+  private centerContent(elements: MapElement[]): void {
+    if (elements.length === 0) return;
+
+    // Calculate bounding box of all elements
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    elements.forEach((element) => {
+      minX = Math.min(minX, element.x);
+      minY = Math.min(minY, element.y);
+      maxX = Math.max(maxX, element.x + element.width);
+      maxY = Math.max(maxY, element.y + element.height);
+    });
+
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+    const canvasWidth = this.canvas.width / (window.devicePixelRatio || 1);
+    const canvasHeight = this.canvas.height / (window.devicePixelRatio || 1);
+
+    // Calculate scale to fit content in canvas (with padding)
+    const padding = 40;
+    const scaleX = (canvasWidth - padding * 2) / contentWidth;
+    const scaleY = (canvasHeight - padding * 2) / contentHeight;
+    const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+
+    // Calculate translation to center the scaled content
+    const scaledWidth = contentWidth * scale;
+    const scaledHeight = contentHeight * scale;
+    const offsetX = (canvasWidth - scaledWidth) / 2 - minX * scale;
+    const offsetY = (canvasHeight - scaledHeight) / 2 - minY * scale;
+
+    // Apply transformation
+    this.ctx.save();
+    this.ctx.translate(offsetX, offsetY);
+    this.ctx.scale(scale, scale);
   }
 
   /**

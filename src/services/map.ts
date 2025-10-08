@@ -22,6 +22,12 @@ export default class MapService {
     return data;
   }
 
+  // Get a public map by ID (no authentication required)
+  public async findPublic(id: string): Promise<Map> {
+    const { data } = await api.get<Map>(`maps/public/${id}`);
+    return data;
+  }
+
   // Create a new map
   public async create(mapData: CreateMapRequest): Promise<Map> {
     const { data } = await api.post<Map>("maps", mapData);

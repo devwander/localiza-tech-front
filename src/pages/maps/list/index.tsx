@@ -1,3 +1,4 @@
+import { CheckIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -15,6 +16,7 @@ export function MapList() {
     "most_recent"
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [copiedMapId, setCopiedMapId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -78,6 +80,24 @@ export function MapList() {
 
   const handleView = (id: string) => {
     navigate(`/dashboard/maps/${id}`);
+  };
+
+  const handleShare = async (id: string, name: string) => {
+    const publicUrl = `${window.location.origin}/maps/public/${id}`;
+
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiedMapId(id);
+      toast.success(`Link do mapa "${name}" copiado!`);
+
+      // Reset copied state after 2 seconds
+      setTimeout(() => {
+        setCopiedMapId(null);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      toast.error("Erro ao copiar link");
+    }
   };
 
   if (isLoading) {
@@ -298,6 +318,17 @@ export function MapList() {
                           />
                         </svg>
                         Editar
+                      </button>
+                      <button
+                        onClick={() => handleShare(map._id, map.name)}
+                        className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        title="Compartilhar link público"
+                      >
+                        {copiedMapId === map._id ? (
+                          <CheckIcon className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <ShareIcon className="h-4 w-4" />
+                        )}
                       </button>
                       <button
                         onClick={() => handleDelete(map._id, map.name)}
