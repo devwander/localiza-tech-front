@@ -51,9 +51,13 @@ export function useFairMapper(): UseFairMapperReturn {
   });
 
   // Renderer do canvas
-  const { render, drawPreviewElement, drawResizeHandles, updateCursor } = useCanvasRenderer(
-    canvasRef as React.RefObject<HTMLCanvasElement>
-  );
+    const { render, drawPreviewElement, drawResizeHandles, updateCursor, getRenderer } = useCanvasRenderer(
+      canvasRef as React.RefObject<HTMLCanvasElement>
+    );
+
+  // Background image (in-memory). We keep meta here but do not persist the binary in fairMapperData.
+  const backgroundImageRef = useRef<HTMLImageElement | null>(null);
+    const [backgroundMeta, setBackgroundMeta] = useState<BackgroundImageMeta | null>(null);
 
   /**
    * Converte coordenadas do mouse para coordenadas do canvas
@@ -142,7 +146,15 @@ export function useFairMapper(): UseFairMapperReturn {
     const width = Math.abs(endX - startX);
     const height = Math.abs(endY - startY);
 
-    if (width < 10 || height < 10) return; // Elemento muito pequeno
+    // debug: log dimensions
+    // eslint-disable-next-line no-console
+    console.debug('[FairMapper] createNewElement dims', { startX, startY, endX, endY, x, y, width, height, layer });
+
+    if (width < 10 || height < 10) {
+      // eslint-disable-next-line no-console
+      console.debug('[FairMapper] createNewElement aborted: element too small');
+      return; // Elemento muito pequeno
+    }
 
     const id = nextIdRef.current++;
     let element: MapElement;
@@ -167,6 +179,10 @@ export function useFairMapper(): UseFairMapperReturn {
    * Renderiza o canvas
    */
   const renderCanvas = useCallback((): void => {
+    // Inform renderer about background image if available
+
+    // Render the canvas
+
     render(layers, selectedElement, debugMode, debugInfo);
     
     // Desenhar handles de resize se necessário
@@ -174,6 +190,28 @@ export function useFairMapper(): UseFairMapperReturn {
       drawResizeHandles(selectedElement);
     }
   }, [layers, selectedElement, debugMode, debugInfo, currentTool, render, drawResizeHandles]);
+
+  // Sync background image to renderer when meta or image changes
+  useEffect(() => {
+    const canvasRenderer = getRenderer();
+    if (canvasRenderer) {
+      const img = backgroundImageRef.current;
+      if (img && backgroundMeta) {
+        canvasRenderer.setBackgroundImage(img, {
+          opacity: backgroundMeta.opacity,
+          x: backgroundMeta.x,
+          y: backgroundMeta.y,
+          width: backgroundMeta.width,
+          height: backgroundMeta.height,
+        });
+      } else {
+        canvasRenderer.setBackgroundImage(null);
+      }
+    }
+
+    // re-render to show changes
+    renderCanvas();
+  }, [backgroundMeta, canvasRef, renderCanvas]);
 
   /**
    * Handler para clique no canvas
@@ -184,10 +222,18 @@ export function useFairMapper(): UseFairMapperReturn {
     if (currentTool === 'select') {
       const element = selectElementAtPosition({ x, y });
       setSelectedElement(element);
-    } else if (currentTool === 'paint' && selectedElement) {
-      // Mudar cor do elemento
-      const nextColor = ColorUtils.getNextLocationColor(selectedElement.color);
-      updateElement(selectedElement.id, { color: nextColor });
+    } else if (currentTool === 'paint') {
+      // Selecionar elemento sob o cursor
+      const element = selectElementAtPosition({ x, y });
+      if (element) {
+        setSelectedElement(element);
+        // Muda a cor do elemento (ciclo)
+        const nextColor = ColorUtils.getNextLocationColor(element.color);
+        updateElement(element.id, { color: nextColor });
+        // Re-render e persistir
+        renderCanvas();
+        saveToStorage();
+      }
     }
   }, [currentTool, selectedElement, getCanvasCoordinates, selectElementAtPosition, updateElement]);
 
@@ -196,6 +242,9 @@ export function useFairMapper(): UseFairMapperReturn {
    */
   const handleMouseDown = useCallback((e: MouseEvent): void => {
     const { x, y } = getCanvasCoordinates(e);
+
+    // eslint-disable-next-line no-console
+    console.debug('[FairMapper] mouseDown', { x, y, currentLayer, currentTool });
 
     if (currentLayer && currentTool === 'draw') {
       // Iniciando desenho de novo elemento
@@ -238,6 +287,9 @@ export function useFairMapper(): UseFairMapperReturn {
   const handleMouseMove = useCallback((e: MouseEvent): void => {
     const { x, y } = getCanvasCoordinates(e);
 
+    // eslint-disable-next-line no-console
+    console.debug('[FairMapper] mouseMove', { x, y, mouseState });
+
     if (mouseState.isDrawing && mouseState.drawStart && currentLayer) {
       // Redesenhar com preview
       renderCanvas();
@@ -278,6 +330,9 @@ export function useFairMapper(): UseFairMapperReturn {
    */
   const handleMouseUp = useCallback((e: MouseEvent): void => {
     const { x, y } = getCanvasCoordinates(e);
+
+    // eslint-disable-next-line no-console
+    console.debug('[FairMapper] mouseUp', { x, y, mouseState, currentLayer });
 
     if (mouseState.isDrawing && mouseState.drawStart && currentLayer) {
       // Finalizar desenho de elemento
@@ -404,13 +459,74 @@ export function useFairMapper(): UseFairMapperReturn {
           saveToStorage();
           resolve();
         } catch (error) {
-          reject(error);
+          if (error instanceof Error) reject(error);
+          else reject(new Error(String(error)));
         }
       };
       reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
       reader.readAsText(file);
     });
   }, [saveToStorage]);
+
+  /**
+   * Handle image file upload: load into an HTMLImageElement and set background meta
+   */
+  const uploadBackgroundImage = useCallback((file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result ?? "");
+        const img = new Image();
+        img.onload = () => {
+          backgroundImageRef.current = img;
+
+          // default to fit canvas size; fall back to natural image size when canvas is not yet measured
+          const canvas = canvasRef.current;
+          let cssWidth = canvas ? canvas.clientWidth : 0;
+          let cssHeight = canvas ? canvas.clientHeight : 0;
+          if (!cssWidth || cssWidth < 10) cssWidth = img.naturalWidth || img.width || 800;
+          if (!cssHeight || cssHeight < 10) cssHeight = img.naturalHeight || img.height || 600;
+
+          // debug trace
+          // eslint-disable-next-line no-console
+          console.debug('[FairMapper] background image loaded', { file: file.name, cssWidth, cssHeight, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight });
+
+          setBackgroundMeta({
+            src: dataUrl,
+            opacity: 0.5,
+            x: 0,
+            y: 0,
+            width: cssWidth,
+            height: cssHeight,
+            naturalWidth: img.naturalWidth,
+            naturalHeight: img.naturalHeight,
+          });
+
+          // trigger render
+          renderCanvas();
+          resolve();
+        };
+        img.onerror = (err) => reject(err);
+        img.src = dataUrl;
+      };
+      reader.onerror = () => reject(new Error('Erro ao carregar imagem'));
+      reader.readAsDataURL(file);
+    });
+  }, [canvasRef, renderCanvas]);
+
+  const setBackgroundOpacity = useCallback((opacity: number) => {
+  setBackgroundMeta(prev => (prev ? { ...prev, opacity } : prev));
+  }, []);
+
+  const setBackgroundTransform = useCallback((x: number, y: number, width: number, height: number) => {
+  setBackgroundMeta(prev => (prev ? { ...prev, x, y, width, height } : prev));
+  }, []);
+
+  const removeBackgroundImage = useCallback(() => {
+    backgroundImageRef.current = null;
+  setBackgroundMeta(null);
+    renderCanvas();
+  }, [renderCanvas]);
 
   // Adicionar event listeners ao canvas
   useEffect(() => {
@@ -420,7 +536,9 @@ export function useFairMapper(): UseFairMapperReturn {
     canvas.addEventListener('click', handleCanvasClick as EventListener);
     canvas.addEventListener('mousedown', handleMouseDown as EventListener);
     canvas.addEventListener('mousemove', handleMouseMove as EventListener);
+    // capture mouseup on both canvas and window so we don't miss it when cursor leaves canvas
     canvas.addEventListener('mouseup', handleMouseUp as EventListener);
+    window.addEventListener('mouseup', handleMouseUp as EventListener);
     canvas.addEventListener('contextmenu', handleRightClick as EventListener);
 
     return () => {
@@ -428,6 +546,7 @@ export function useFairMapper(): UseFairMapperReturn {
       canvas.removeEventListener('mousedown', handleMouseDown as EventListener);
       canvas.removeEventListener('mousemove', handleMouseMove as EventListener);
       canvas.removeEventListener('mouseup', handleMouseUp as EventListener);
+      window.removeEventListener('mouseup', handleMouseUp as EventListener);
       canvas.removeEventListener('contextmenu', handleRightClick as EventListener);
     };
   }, [handleCanvasClick, handleMouseDown, handleMouseMove, handleMouseUp, handleRightClick]);
@@ -478,5 +597,12 @@ export function useFairMapper(): UseFairMapperReturn {
     
     // Canvas ref
     canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>
+    ,
+    // Background image controls
+    uploadBackgroundImage,
+    setBackgroundOpacity,
+    setBackgroundTransform,
+    removeBackgroundImage,
+    backgroundMeta
   };
 }

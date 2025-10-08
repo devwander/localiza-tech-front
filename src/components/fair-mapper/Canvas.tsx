@@ -67,7 +67,7 @@ export function Canvas({ canvasRef }: CanvasProps) {
           display: "block",
           width: "100%",
           height: "100%",
-          background: "white",
+          background: "transparent",
           borderRadius: "8px",
         }}
       />

@@ -45,6 +45,43 @@ export function FairMapper() {
                 />
               </label>
 
+              {/* Background image upload */}
+              <label className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+                🖼️ Planta (Rascunho)
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && fairMapper.uploadBackgroundImage) {
+                      fairMapper.uploadBackgroundImage(file).catch(console.error);
+                    }
+                    e.currentTarget.value = "";
+                  }}
+                  className="sr-only"
+                />
+              </label>
+
+              {/* Opacity slider and remove button */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={fairMapper.backgroundMeta?.opacity ?? 0.5}
+                  onChange={(e) => fairMapper.setBackgroundOpacity?.(Number(e.target.value))}
+                  className="w-32"
+                />
+                <button
+                  onClick={() => fairMapper.removeBackgroundImage?.()}
+                  title="Remover rascunho"
+                  className="px-2 py-1 text-sm border rounded-md bg-red-50 text-red-700"
+                >
+                  Remover
+                </button>
+              </div>
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -65,6 +102,10 @@ export function FairMapper() {
         currentLayer={fairMapper.currentLayer}
         onToolChange={fairMapper.setTool}
         onLayerChange={fairMapper.setDrawMode}
+        onUploadBackground={fairMapper.uploadBackgroundImage}
+        onSetBackgroundOpacity={fairMapper.setBackgroundOpacity}
+        onRemoveBackground={fairMapper.removeBackgroundImage}
+        backgroundOpacity={fairMapper.backgroundMeta?.opacity ?? 0.5}
       />
 
       {/* Main Content */}

@@ -164,6 +164,18 @@ export interface MapData {
   version: string;
 }
 
+// Background image metadata (not required to be persisted with drawing data)
+export interface BackgroundImageMeta {
+  src: string; // data URL or remote URL
+  opacity: number; // 0..1
+  x: number; // position on canvas (CSS pixels)
+  y: number;
+  width: number; // display size on canvas (CSS pixels)
+  height: number;
+  naturalWidth?: number;
+  naturalHeight?: number;
+}
+
 // Props dos componentes
 export interface CanvasProps {
   width: number;
@@ -243,6 +255,12 @@ export interface UseFairMapperReturn {
 
   // Canvas ref
   canvasRef: React.RefObject<HTMLCanvasElement>;
+  // Background image controls (optional)
+  uploadBackgroundImage?: (file: File) => Promise<void>;
+  setBackgroundOpacity?: (opacity: number) => void;
+  setBackgroundTransform?: (x: number, y: number, width: number, height: number) => void;
+  removeBackgroundImage?: () => void;
+  backgroundMeta?: BackgroundImageMeta | null;
 }
 
 // Mensagem de feedback

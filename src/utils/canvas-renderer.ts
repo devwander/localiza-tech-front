@@ -27,6 +27,8 @@ const SELECTION_CONFIG = {
 export class CanvasRenderer {
   private ctx: CanvasRenderingContext2D;
   private canvas: HTMLCanvasElement;
+  private backgroundImage: HTMLImageElement | null = null;
+  private backgroundMeta: { opacity: number; x: number; y: number; width: number; height: number } | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -47,6 +49,19 @@ export class CanvasRenderer {
     debugInfo?: DebugInfo
   ): void {
     this.clearCanvas();
+
+    // Draw background image first (if present)
+    if (this.backgroundImage && this.backgroundMeta) {
+      const { opacity, x, y, width, height } = this.backgroundMeta;
+      this.ctx.save();
+      this.ctx.globalAlpha = opacity;
+      try {
+        this.ctx.drawImage(this.backgroundImage, x, y, width, height);
+      } catch (err) {
+        // ignore draw errors
+      }
+      this.ctx.restore();
+    }
 
     // Desenhar grid se debug ativo
     if (debugMode) {
@@ -238,6 +253,21 @@ export class CanvasRenderer {
    */
   getContext(): CanvasRenderingContext2D {
     return this.ctx;
+  }
+
+  /**
+   * Set background image and display meta
+   */
+  setBackgroundImage(img: HTMLImageElement | null, meta?: { opacity: number; x: number; y: number; width: number; height: number }) {
+    this.backgroundImage = img;
+    this.backgroundMeta = meta || null;
+    // debug
+    // eslint-disable-next-line no-console
+    console.debug('[CanvasRenderer] setBackgroundImage', { hasImage: !!img, meta: this.backgroundMeta });
+  }
+
+  getBackgroundMeta() {
+    return this.backgroundMeta;
   }
 
   /**
