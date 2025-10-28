@@ -7,6 +7,7 @@ import { api } from "../lib";
 import { Signin } from "../pages/auth/sign-in";
 import { Signup } from "../pages/auth/sign-up";
 import { MapPublicView } from "../pages/maps/public";
+import { StoresPage } from "../pages/stores";
 import { authStore } from "../store";
 import { Private } from "./private";
 import { Public } from "./public";
@@ -77,6 +78,7 @@ export function Router(): ReactElement {
             <Route element={<ManagementDashboard />}>
               <Route path="/dashboard/maps/*" element={<MapsRouter />} />
               <Route path="/mapping" element={<MappingRequestsRouter />} />
+              <Route path="/stores/:mapId" element={<StoresPage />} />
             </Route>
           </Route>
         )}
