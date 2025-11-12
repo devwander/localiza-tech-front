@@ -18,6 +18,8 @@ import { toast } from "react-toastify";
 import { Loading } from "../../../components/loading";
 import { MapPreview } from "../../../components/map";
 import { CreateMapModal } from "../../../components/modal";
+import type { MapTag } from "../../../models";
+import { MapTagColors, MapTagLabels } from "../../../models";
 import { useCreateMap, useDeleteMap } from "../../../mutation";
 import { useMaps } from "../../../queries";
 
@@ -109,11 +111,16 @@ export function MapList() {
     setIsModalOpen(false);
   };
 
-  const handleModalSubmit = async (name: string, description?: string) => {
+  const handleModalSubmit = async (
+    name: string,
+    description?: string,
+    tags?: MapTag[]
+  ) => {
     try {
       const newMap = await createMapMutation.mutateAsync({
         name,
         metadata: { description },
+        tags,
         features: [],
       });
       toast.success("Mapa criado com sucesso!");
@@ -342,24 +349,36 @@ export function MapList() {
                         <h3 className="text-lg font-semibold text-gray-900 truncate">
                           {map.name}
                         </h3>
-                        {map.type &&
-                          (() => {
-                            const type = map.type.toLowerCase();
-                            let badgeClass = "bg-green-100 text-green-800";
-                            if (type === "evento")
-                              badgeClass = "bg-pink-100 text-pink-800";
-                            else if (type === "shopping")
-                              badgeClass = "bg-blue-100 text-blue-800";
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {map.tags && map.tags.length > 0
+                            ? map.tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${MapTagColors[tag]}`}
+                                >
+                                  {MapTagLabels[tag]}
+                                </span>
+                              ))
+                            : map.type
+                            ? (() => {
+                                const type = map.type.toLowerCase();
+                                let badgeClass = "bg-green-100 text-green-800";
+                                if (type === "evento")
+                                  badgeClass = "bg-pink-100 text-pink-800";
+                                else if (type === "shopping")
+                                  badgeClass = "bg-blue-100 text-blue-800";
 
-                            return (
-                              <span
-                                className={`inline-flex items-center mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}
-                              >
-                                {map.type.charAt(0).toUpperCase() +
-                                  map.type.slice(1)}
-                              </span>
-                            );
-                          })()}
+                                return (
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}
+                                  >
+                                    {map.type.charAt(0).toUpperCase() +
+                                      map.type.slice(1)}
+                                  </span>
+                                );
+                              })()
+                            : null}
+                        </div>
                       </div>
                     </div>
                     {map.metadata?.description && (

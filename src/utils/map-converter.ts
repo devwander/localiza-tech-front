@@ -1,4 +1,9 @@
-import type { Map as ApiMap, CreateMapRequest, MapFeature } from "../models";
+import type {
+  Map as ApiMap,
+  CreateMapRequest,
+  MapFeature,
+  UpdateMapRequest,
+} from "../models";
 import type {
   BackgroundElement,
   LocationElement,
@@ -281,9 +286,7 @@ export function apiFormatToLayers(apiMap: ApiMap): {
 /**
  * Converts FairMapper layers to API update format
  */
-export function layersToUpdateFormat(layers: MapLayers): {
-  features: MapFeature[];
-} {
+export function layersToUpdateFormat(layers: MapLayers): UpdateMapRequest {
   const allElements: MapElement[] = [
     ...layers.background,
     ...layers.submaps,

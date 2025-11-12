@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { MapTag, MapTagLabels } from "../../models";
 
 interface CreateMapModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string, description?: string) => void;
+  onSubmit: (name: string, description?: string, tags?: MapTag[]) => void;
   isLoading?: boolean;
 }
 
@@ -15,13 +16,18 @@ export function CreateMapModal({
 }: CreateMapModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedTags, setSelectedTags] = useState<MapTag[]>([]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onSubmit(name.trim(), description.trim() || undefined);
+      onSubmit(
+        name.trim(),
+        description.trim() || undefined,
+        selectedTags.length > 0 ? selectedTags : undefined
+      );
     }
   };
 
@@ -29,8 +35,15 @@ export function CreateMapModal({
     if (!isLoading) {
       setName("");
       setDescription("");
+      setSelectedTags([]);
       onClose();
     }
+  };
+
+  const toggleTag = (tag: MapTag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
   };
 
   return (
@@ -106,6 +119,32 @@ export function CreateMapModal({
                   disabled={isLoading}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:bg-gray-100"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags (opcional)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(MapTagLabels).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => toggleTag(value as MapTag)}
+                      disabled={isLoading}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
+                        selectedTags.includes(value as MapTag)
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Selecione uma ou mais tags para categorizar o mapa
+                </p>
               </div>
             </div>
 

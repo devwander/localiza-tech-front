@@ -33,6 +33,39 @@ export const LocalCategory = {
 
 export type LocalCategory = (typeof LocalCategory)[keyof typeof LocalCategory];
 
+// Tags disponíveis para categorizar mapas
+export const MapTag = {
+  EVENTO: "evento",
+  FEIRA: "feira",
+  SHOPPING: "shopping",
+  CONGRESSO: "congresso",
+  EXPOSICAO: "exposicao",
+  FESTIVAL: "festival",
+  OUTRO: "outro",
+} as const;
+
+export type MapTag = (typeof MapTag)[keyof typeof MapTag];
+
+export const MapTagLabels: Record<MapTag, string> = {
+  evento: "Evento",
+  feira: "Feira",
+  shopping: "Shopping",
+  congresso: "Congresso",
+  exposicao: "Exposição",
+  festival: "Festival",
+  outro: "Outro",
+};
+
+export const MapTagColors: Record<MapTag, string> = {
+  evento: "bg-purple-100 text-purple-800",
+  feira: "bg-blue-100 text-blue-800",
+  shopping: "bg-green-100 text-green-800",
+  congresso: "bg-yellow-100 text-yellow-800",
+  exposicao: "bg-pink-100 text-pink-800",
+  festival: "bg-orange-100 text-orange-800",
+  outro: "bg-gray-100 text-gray-800",
+};
+
 export interface MapFeature {
   type: string;
   id?: string;
@@ -57,6 +90,7 @@ export interface Map {
   _id: string;
   name: string;
   type: string;
+  tags?: MapTag[]; // Tags para categorizar o mapa
   metadata: MapMetadata;
   features: MapFeature[];
   userId: string;
@@ -67,6 +101,7 @@ export interface Map {
 export interface CreateMapRequest {
   name: string;
   type?: string;
+  tags?: MapTag[]; // Tags para categorizar o mapa
   metadata?: {
     description?: string;
     version?: string;
@@ -77,6 +112,7 @@ export interface CreateMapRequest {
 export interface UpdateMapRequest {
   name?: string;
   type?: string;
+  tags?: MapTag[]; // Tags para editar
   metadata?: {
     description?: string;
     version?: string;

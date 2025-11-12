@@ -7,8 +7,10 @@ import { Canvas } from "../../../components/fair-mapper/Canvas";
 import { Sidebar } from "../../../components/fair-mapper/Sidebar";
 import { Toolbar } from "../../../components/fair-mapper/Toolbar";
 import { Loading } from "../../../components/loading";
-import { ConfirmExitModal } from "../../../components/modal";
+import { ConfirmExitModal, EditMapTagsModal } from "../../../components/modal";
 import { useFairMapper } from "../../../hooks/useFairMapper";
+import type { MapTag } from "../../../models";
+import { MapTagColors, MapTagLabels } from "../../../models";
 import { useCreateMap, useUpdateMap } from "../../../mutation";
 import { useMap, useStoresQuery } from "../../../queries";
 import { Service } from "../../../services";
@@ -47,6 +49,8 @@ export function MapEditor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [mapTags, setMapTags] = useState<MapTag[]>([]);
+  const [showTagsModal, setShowTagsModal] = useState(false);
 
   // Reset quando o ID mudar (navegação entre mapas)
   useEffect(() => {
@@ -61,6 +65,9 @@ export function MapEditor() {
       console.log("[MapEditor] Loading map from API:", mapData);
       console.log("[MapEditor] Map has features:", mapData.features?.length);
       const { layers: initialLayers, nextId } = apiFormatToLayers(mapData);
+
+      // Carregar tags do mapa
+      setMapTags(mapData.tags || []);
 
       // Enriquecer os elementos com informações das lojas vinculadas
       let layers = initialLayers;
@@ -134,6 +141,12 @@ export function MapEditor() {
         // Update existing map - only save layers, keep the name
         console.log("[MapEditor] Updating map with layers:", fairMapper.layers);
         const updateData = layersToUpdateFormat(fairMapper.layers);
+
+        // Adicionar tags ao updateData
+        if (mapTags.length > 0) {
+          updateData.tags = mapTags;
+        }
+
         console.log("[MapEditor] Update data being sent:", updateData);
         console.log("[MapEditor] Total features:", updateData.features?.length);
 
@@ -161,6 +174,7 @@ export function MapEditor() {
     isNewMap,
     id,
     mapData,
+    mapTags,
     createMutation,
     updateMutation,
     navigate,
@@ -220,6 +234,12 @@ export function MapEditor() {
     }
   };
 
+  const handleSaveTags = (tags: MapTag[]) => {
+    setMapTags(tags);
+    setHasUnsavedChanges(true);
+    toast.success("Tags atualizadas! Salve o mapa para aplicar as alterações.");
+  };
+
   if (isLoading && !isNewMap) {
     return <Loading />;
   }
@@ -260,9 +280,32 @@ export function MapEditor() {
               >
                 ← Voltar
               </button>
-              <h1 className="text-lg font-semibold text-gray-900">
-                {isNewMap ? "Novo Mapa" : mapData?.name || "Editando Mapa"}
-              </h1>
+              <div className="flex flex-col">
+                <h1 className="text-lg font-semibold text-gray-900">
+                  {isNewMap ? "Novo Mapa" : mapData?.name || "Editando Mapa"}
+                </h1>
+                {!isNewMap && mapTags.length > 0 && (
+                  <div className="flex gap-1 mt-1">
+                    {mapTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${MapTagColors[tag]}`}
+                      >
+                        {MapTagLabels[tag]}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {!isNewMap && (
+                <button
+                  onClick={() => setShowTagsModal(true)}
+                  className="ml-2 inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-600 bg-white hover:bg-gray-50 transition-colors"
+                  title="Editar tags"
+                >
+                  🏷️ Tags
+                </button>
+              )}
             </div>
 
             <div className="flex items-center space-x-3">
@@ -454,6 +497,15 @@ export function MapEditor() {
         onSaveAndExit={handleSaveAndExit}
         onExitWithoutSaving={handleExitWithoutSaving}
         isSaving={isSaving}
+      />
+
+      {/* Modal de edição de tags */}
+      <EditMapTagsModal
+        isOpen={showTagsModal}
+        onClose={() => setShowTagsModal(false)}
+        onSave={handleSaveTags}
+        currentTags={mapTags}
+        isLoading={false}
       />
     </div>
   );

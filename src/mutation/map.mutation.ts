@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CreateMapRequest, Map } from "../models";
+import type { CreateMapRequest, UpdateMapRequest } from "../models";
 import { Service } from "../services";
 
 export const useCreateMap = () => {
@@ -17,7 +17,7 @@ export const useUpdateMap = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Map> }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateMapRequest }) =>
       Service.map.update(id, data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["maps"] });
