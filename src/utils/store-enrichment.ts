@@ -1,5 +1,5 @@
-import type { LocationElement, MapLayers } from "../types/fair-mapper";
 import type { Store } from "../models";
+import type { LocationElement, MapLayers } from "../types/fair-mapper";
 
 /**
  * Enriquece os elementos do mapa com informações das lojas vinculadas

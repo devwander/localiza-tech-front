@@ -1,7 +1,7 @@
 // Mapeamento de ícones emoji por categoria de loja
 export const getCategoryEmoji = (category?: string): string => {
   if (!category) return "📦";
-  
+
   const emojiMap: Record<string, string> = {
     food: "🍽️",
     clothing: "👔",
@@ -15,14 +15,14 @@ export const getCategoryEmoji = (category?: string): string => {
     services: "📅",
     other: "📦",
   };
-  
+
   return emojiMap[category] || "📦";
 };
 
 // Cores por categoria
 export const getCategoryColor = (category?: string): string => {
   if (!category) return "#6B7280";
-  
+
   const colors: Record<string, string> = {
     food: "#F97316",
     clothing: "#3B82F6",
@@ -36,6 +36,6 @@ export const getCategoryColor = (category?: string): string => {
     services: "#9333EA",
     other: "#6B7280",
   };
-  
+
   return colors[category] || "#6B7280";
 };

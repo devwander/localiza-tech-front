@@ -30,12 +30,12 @@ export function MapEditor() {
     isLoading,
     isError,
   } = useMap(isNewMap ? undefined : id);
-  
+
   // Buscar lojas do mapa para enriquecer os elementos
   const { data: storesData } = useStoresQuery(
     !isNewMap && id ? { mapId: id, limit: 1000 } : undefined
   );
-  
+
   const createMutation = useCreateMap();
   const updateMutation = useUpdateMap();
 
@@ -61,14 +61,17 @@ export function MapEditor() {
       console.log("[MapEditor] Loading map from API:", mapData);
       console.log("[MapEditor] Map has features:", mapData.features?.length);
       const { layers: initialLayers, nextId } = apiFormatToLayers(mapData);
-      
+
       // Enriquecer os elementos com informações das lojas vinculadas
       let layers = initialLayers;
       if (storesData?.data && storesData.data.length > 0) {
-        console.log("[MapEditor] Enriching layers with store data:", storesData.data.length);
+        console.log(
+          "[MapEditor] Enriching layers with store data:",
+          storesData.data.length
+        );
         layers = enrichLayersWithStoreData(initialLayers, storesData.data);
       }
-      
+
       console.log("[MapEditor] Converted layers:", {
         background: layers.background.length,
         submaps: layers.submaps.length,

@@ -6,8 +6,8 @@ import type {
   MapElement,
   MapLayers,
 } from "../types/fair-mapper";
-import { ColorUtils } from "./layer-utils";
 import { getCategoryEmoji } from "./category-icons";
+import { ColorUtils } from "./layer-utils";
 
 const LAYER_CONFIG = {
   locations: { zIndex: 3, color: "#EF4444", name: "Locais" },
@@ -216,13 +216,19 @@ export class CanvasRenderer {
     const badgeSize = 8;
     const badgeX = element.x + element.width - badgeSize - 2;
     const badgeY = element.y + 2;
-    
+
     // Círculo verde indicando vínculo
     this.ctx.fillStyle = "#10B981";
     this.ctx.beginPath();
-    this.ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+    this.ctx.arc(
+      badgeX + badgeSize / 2,
+      badgeY + badgeSize / 2,
+      badgeSize / 2,
+      0,
+      Math.PI * 2
+    );
     this.ctx.fill();
-    
+
     // Borda branca para destaque
     this.ctx.strokeStyle = "#FFFFFF";
     this.ctx.lineWidth = 1;
@@ -237,16 +243,16 @@ export class CanvasRenderer {
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-    
+
     img.onload = () => {
       this.imageCache.set(url, img);
     };
-    
+
     img.onerror = () => {
       // Remover do cache se falhar
       this.imageCache.delete(url);
     };
-    
+
     img.src = url;
   }
 
@@ -273,15 +279,15 @@ export class CanvasRenderer {
     if (element.layer === "locations" && element.storeCategory) {
       const emoji = getCategoryEmoji(element.storeCategory);
       const emojiSize = Math.min(20, element.width / 4);
-      
+
       this.ctx.font = `${emojiSize}px Arial`;
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
-      
+
       // Desenhar emoji no topo do elemento
       const emojiY = element.y + emojiSize;
       this.ctx.fillText(emoji, centerX, emojiY);
-      
+
       // Ajustar offset do texto para ficar abaixo do emoji
       textYOffset = emojiSize / 2;
     }
@@ -300,37 +306,40 @@ export class CanvasRenderer {
   /**
    * Desenha a logo da loja como fundo discreto
    */
-  private drawStoreLogoBackground(element: MapElement, img: HTMLImageElement): void {
+  private drawStoreLogoBackground(
+    element: MapElement,
+    img: HTMLImageElement
+  ): void {
     this.ctx.save();
-    
+
     // Desenhar com opacidade baixa para ser discreto
     this.ctx.globalAlpha = 0.15;
-    
+
     // Calcular dimensões para manter proporção
     const padding = 10;
     const maxWidth = element.width - padding * 2;
     const maxHeight = element.height - padding * 2;
-    
+
     let drawWidth = maxWidth;
     let drawHeight = maxHeight;
-    
+
     const aspectRatio = img.width / img.height;
-    
+
     if (maxWidth / maxHeight > aspectRatio) {
       drawWidth = maxHeight * aspectRatio;
     } else {
       drawHeight = maxWidth / aspectRatio;
     }
-    
+
     const drawX = element.x + (element.width - drawWidth) / 2;
     const drawY = element.y + (element.height - drawHeight) / 2;
-    
+
     try {
       this.ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
     } catch (err) {
       // Ignorar erros de desenho
     }
-    
+
     this.ctx.restore();
   }
 

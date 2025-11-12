@@ -36,7 +36,7 @@ export function PropertiesPanel({
   // Função para copiar informações da loja quando vinculada
   const handleStoreLink = (storeId: string) => {
     const selectedStore = storesData?.data?.find((s) => s._id === storeId);
-    
+
     if (selectedStore && selectedElement) {
       // Copiar o nome da loja para o nome do elemento
       setFormData((prev) => ({
@@ -44,7 +44,7 @@ export function PropertiesPanel({
         storeId,
         name: selectedStore.name,
       }));
-      
+
       // Atualizar imediatamente o elemento com as novas informações
       onUpdateElement(selectedElement.id, {
         name: selectedStore.name,
@@ -219,7 +219,8 @@ export function PropertiesPanel({
                 ))}
               </select>
               <p className="mt-1 text-xs text-gray-500">
-                Vincule este espaço a uma loja cadastrada. O nome será copiado automaticamente.
+                Vincule este espaço a uma loja cadastrada. O nome será copiado
+                automaticamente.
               </p>
             </div>
           )}
