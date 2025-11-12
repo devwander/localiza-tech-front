@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import React from "react";
 import type {
   DebugInfo,
   LayerType,
@@ -54,13 +55,6 @@ export class CanvasRenderer {
     debugMode: boolean = false,
     debugInfo?: DebugInfo
   ): void {
-    console.log("[CanvasRenderer] render called with:", {
-      background: layers.background.length,
-      submaps: layers.submaps.length,
-      locations: layers.locations.length,
-      selectedElement: selectedElement?.id,
-    });
-
     this.clearCanvas();
 
     // Calculate bounding box and apply transform to center content
@@ -72,6 +66,9 @@ export class CanvasRenderer {
 
     if (allElements.length > 0) {
       this.centerContent(allElements);
+    } else {
+      // No elements to render, just return
+      return;
     }
 
     // Draw background image first (if present)
@@ -169,6 +166,19 @@ export class CanvasRenderer {
    * Desenha um elemento individual
    */
   private drawElement(element: MapElement): void {
+    // Validar valores antes de desenhar
+    if (
+      !isFinite(element.x) ||
+      !isFinite(element.y) ||
+      !isFinite(element.width) ||
+      !isFinite(element.height) ||
+      element.width <= 0 ||
+      element.height <= 0
+    ) {
+      console.warn("[CanvasRenderer] Skipping invalid element:", element);
+      return;
+    }
+
     // Corpo do elemento
     this.ctx.fillStyle = element.color;
     this.ctx.fillRect(element.x, element.y, element.width, element.height);
@@ -387,56 +397,68 @@ export class CanvasRenderer {
 export function useCanvasRenderer(
   canvasRef: React.RefObject<HTMLCanvasElement>
 ) {
-  let renderer: CanvasRenderer | null = null;
+  const rendererRef = React.useRef<CanvasRenderer | null>(null);
 
-  const getRenderer = (): CanvasRenderer | null => {
+  const getRenderer = React.useCallback((): CanvasRenderer | null => {
     if (!canvasRef.current) return null;
 
-    if (!renderer) {
-      renderer = new CanvasRenderer(canvasRef.current);
+    if (!rendererRef.current) {
+      rendererRef.current = new CanvasRenderer(canvasRef.current);
     }
 
-    return renderer;
-  };
+    return rendererRef.current;
+  }, [canvasRef]);
 
-  const render = (
-    layers: MapLayers,
-    selectedElement: MapElement | null = null,
-    debugMode: boolean = false,
-    debugInfo?: DebugInfo
-  ): void => {
-    const canvasRenderer = getRenderer();
-    if (canvasRenderer) {
-      canvasRenderer.render(layers, selectedElement, debugMode, debugInfo);
-    }
-  };
+  const render = React.useCallback(
+    (
+      layers: MapLayers,
+      selectedElement: MapElement | null = null,
+      debugMode: boolean = false,
+      debugInfo?: DebugInfo
+    ): void => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        canvasRenderer.render(layers, selectedElement, debugMode, debugInfo);
+      }
+    },
+    [getRenderer]
+  );
 
-  const drawPreviewElement = (
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-    layer: LayerType
-  ): void => {
-    const canvasRenderer = getRenderer();
-    if (canvasRenderer) {
-      canvasRenderer.drawPreviewElement(startX, startY, endX, endY, layer);
-    }
-  };
+  const drawPreviewElement = React.useCallback(
+    (
+      startX: number,
+      startY: number,
+      endX: number,
+      endY: number,
+      layer: LayerType
+    ): void => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        canvasRenderer.drawPreviewElement(startX, startY, endX, endY, layer);
+      }
+    },
+    [getRenderer]
+  );
 
-  const drawResizeHandles = (element: MapElement): void => {
-    const canvasRenderer = getRenderer();
-    if (canvasRenderer) {
-      canvasRenderer.drawResizeHandles(element);
-    }
-  };
+  const drawResizeHandles = React.useCallback(
+    (element: MapElement): void => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        canvasRenderer.drawResizeHandles(element);
+      }
+    },
+    [getRenderer]
+  );
 
-  const updateCursor = (tool: string, isDrawing: boolean = false): void => {
-    const canvasRenderer = getRenderer();
-    if (canvasRenderer) {
-      canvasRenderer.updateCursor(tool, isDrawing);
-    }
-  };
+  const updateCursor = React.useCallback(
+    (tool: string, isDrawing: boolean = false): void => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        canvasRenderer.updateCursor(tool, isDrawing);
+      }
+    },
+    [getRenderer]
+  );
 
   return {
     render,

@@ -119,6 +119,17 @@ export function MapEditor() {
         console.log("[MapEditor] Update data being sent:", updateData);
         console.log("[MapEditor] Total features:", updateData.features?.length);
 
+        if (updateData.features && updateData.features.length > 0) {
+          console.log(
+            "[MapEditor] First feature to send:",
+            JSON.stringify(updateData.features[0], null, 2)
+          );
+          console.log(
+            "[MapEditor] First feature coordinates:",
+            updateData.features[0].geometry?.coordinates
+          );
+        }
+
         await updateMutation.mutateAsync({ id, data: updateData });
         setHasUnsavedChanges(false);
         toast.success("Mapa salvo com sucesso!");
@@ -401,8 +412,10 @@ export function MapEditor() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Canvas */}
-        <div className="flex-1 flex items-center justify-center p-2">
-          <Canvas canvasRef={fairMapper.canvasRef} />
+        <div className="flex-1 flex items-center justify-center p-2 min-h-0">
+          <div className="w-full h-full bg-white rounded-lg shadow-sm border">
+            <Canvas canvasRef={fairMapper.canvasRef} />
+          </div>
         </div>
 
         {/* Sidebar */}

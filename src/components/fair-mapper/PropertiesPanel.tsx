@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useStoresQuery } from "../../queries";
 import type { MapElement } from "../../types/fair-mapper";
 
 interface PropertiesPanelProps {
@@ -12,6 +14,14 @@ export function PropertiesPanel({
   onUpdateElement,
   onDeleteElement,
 }: PropertiesPanelProps) {
+  const { id: mapId } = useParams<{ id: string }>();
+
+  // Buscar lojas apenas se tiver mapId válido e não for "new"
+  const shouldFetchStores = mapId && mapId !== "new";
+  const { data: storesData } = useStoresQuery(
+    shouldFetchStores ? { mapId, limit: 100 } : undefined
+  );
+
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -20,6 +30,7 @@ export function PropertiesPanel({
     y: 0,
     width: 0,
     height: 0,
+    storeId: "",
   });
 
   // Atualizar form quando elemento selecionado mudar
@@ -33,6 +44,7 @@ export function PropertiesPanel({
         y: Math.round(selectedElement.y),
         width: Math.round(selectedElement.width),
         height: Math.round(selectedElement.height),
+        storeId: selectedElement.storeId || "",
       });
     } else {
       setFormData({
@@ -43,6 +55,7 @@ export function PropertiesPanel({
         y: 0,
         width: 0,
         height: 0,
+        storeId: "",
       });
     }
   }, [selectedElement]);
@@ -57,6 +70,7 @@ export function PropertiesPanel({
       y: formData.y,
       width: formData.width,
       height: formData.height,
+      storeId: formData.storeId || undefined,
     });
   };
 
@@ -149,6 +163,32 @@ export function PropertiesPanel({
               className="w-full h-8 border border-gray-300 rounded-md shadow-sm cursor-pointer"
             />
           </div>
+
+          {/* Vincular Loja - apenas para locais */}
+          {selectedElement.layer === "locations" && shouldFetchStores && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Vincular Loja/Espaço
+              </label>
+              <select
+                value={formData.storeId || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, storeId: e.target.value })
+                }
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Sem vínculo</option>
+                {storesData?.data?.map((store) => (
+                  <option key={store._id} value={store._id}>
+                    {store.name} - {store.floor}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Vincule este espaço a uma loja cadastrada
+              </p>
+            </div>
+          )}
 
           {/* Posição */}
           <div className="grid grid-cols-2 gap-2">

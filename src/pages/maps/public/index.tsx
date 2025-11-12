@@ -63,6 +63,26 @@ export function MapPublicView() {
     renderCanvas();
   }, [renderCanvas]);
 
+  // Listen for canvas resize events
+  useEffect(() => {
+    const handleCanvasResize = () => {
+      console.log("[MapPublicView] Canvas resized, re-rendering");
+      renderCanvas();
+    };
+
+    window.addEventListener("canvas-resized", handleCanvasResize);
+
+    // Initial render with a delay to ensure canvas is ready
+    const timer = setTimeout(() => {
+      renderCanvas();
+    }, 100);
+
+    return () => {
+      window.removeEventListener("canvas-resized", handleCanvasResize);
+      clearTimeout(timer);
+    };
+  }, [renderCanvas]);
+
   if (isLoading) {
     return <Loading />;
   }

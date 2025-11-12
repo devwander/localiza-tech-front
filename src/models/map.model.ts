@@ -48,6 +48,7 @@ export interface MapFeature {
     color?: string;
     exhibitor?: string;
     selected?: boolean;
+    storeId?: string; // ID da loja vinculada a este espaço
     [key: string]: unknown;
   };
 }

@@ -1,33 +1,35 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { 
-  Plus, 
-  Search, 
-  ArrowLeft, 
-  MapPin,
-  UtensilsCrossed,
-  ShoppingBag,
-  Laptop,
-  Gem,
-  BookOpen,
-  Trophy,
-  Home,
-  Sparkles,
-  Baby,
-  Calendar,
-  Package,
-} from "lucide-react";
-import { useStoresByMapQuery } from "../../queries";
 import {
-  useCreateStoreMutation,
-  useUpdateStoreMutation,
-  useDeleteStoreMutation,
-} from "../../mutation";
-import { StoreForm, StoreList } from "../../components/store";
+  ArrowLeft,
+  Baby,
+  BookOpen,
+  Calendar,
+  Gem,
+  Home,
+  Laptop,
+  MapPin,
+  Package,
+  Plus,
+  Search,
+  ShoppingBag,
+  Sparkles,
+  Trophy,
+  UtensilsCrossed,
+} from "lucide-react";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { MapPreview } from "../../components/map";
 import type { StoreFormData } from "../../components/store";
+import { StoreForm, StoreList } from "../../components/store";
 import type { Store, StoreCategory } from "../../models";
 import { StoreCategoryLabels } from "../../models";
+import {
+  useCreateStoreMutation,
+  useDeleteStoreMutation,
+  useUpdateStoreMutation,
+} from "../../mutation";
+import { useStoresByMapQuery } from "../../queries";
+import { useMap } from "../../queries/map.query";
 
 export const StoresPage = () => {
   const { mapId } = useParams<{ mapId: string }>();
@@ -40,9 +42,12 @@ export const StoresPage = () => {
     y: number;
   }>({ x: 0, y: 0 });
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<StoreCategory | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState<StoreCategory | "all">(
+    "all"
+  );
 
   const { data: stores = [], isLoading } = useStoresByMapQuery(mapId || "");
+  const { data: mapData } = useMap(mapId);
   const createMutation = useCreateStoreMutation();
   const updateMutation = useUpdateStoreMutation();
   const deleteMutation = useDeleteStoreMutation();
@@ -79,7 +84,13 @@ export const StoresPage = () => {
 
   const handleSubmit = async (data: StoreFormData) => {
     // Validar campos obrigatórios
-    if (!data.name || !data.floor || !data.category || !data.openingHours || !data.description) {
+    if (
+      !data.name ||
+      !data.floor ||
+      !data.category ||
+      !data.openingHours ||
+      !data.description
+    ) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
@@ -99,21 +110,28 @@ export const StoresPage = () => {
           location: selectedLocation,
           logo: data.logo || "", // Garantir que logo não seja undefined
         };
-        
+
         console.log("Enviando dados:", createData); // Debug
-        
+
         await createMutation.mutateAsync(createData);
         toast.success("Espaço criado com sucesso!");
       }
       setIsModalOpen(false);
       setSelectedStore(undefined);
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Erro desconhecido";
+    } catch (error: unknown) {
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        err?.response?.data?.message || err?.message || "Erro desconhecido";
       toast.error(
-        selectedStore ? `Erro ao atualizar espaço: ${errorMessage}` : `Erro ao criar espaço: ${errorMessage}`
+        selectedStore
+          ? `Erro ao atualizar espaço: ${errorMessage}`
+          : `Erro ao criar espaço: ${errorMessage}`
       );
       console.error("Erro completo:", error);
-      console.error("Resposta do servidor:", error?.response?.data);
+      console.error("Resposta do servidor:", err?.response?.data);
     }
   };
 
@@ -169,6 +187,18 @@ export const StoresPage = () => {
         </button>
       </div>
 
+      {/* Visualização do Mapa */}
+      {mapData && (
+        <div className="mb-6 bg-white rounded-lg shadow-sm border p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">
+            Visualização do Mapa: {mapData.name}
+          </h2>
+          <div className="flex items-center justify-center bg-gray-50 rounded-lg p-4">
+            <MapPreview map={mapData} width={600} height={400} />
+          </div>
+        </div>
+      )}
+
       {/* Dashboard de Estatísticas */}
       <div className="mb-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-3 shadow-sm">
@@ -176,13 +206,15 @@ export const StoresPage = () => {
             <MapPin size={14} />
             <span className="font-medium">Total de Espaços</span>
           </div>
-          <div className="text-2xl font-bold text-blue-600">{stores.length}</div>
+          <div className="text-2xl font-bold text-blue-600">
+            {stores.length}
+          </div>
         </div>
-        
+
         {Object.entries(StoreCategoryLabels).map(([category, label]) => {
           const count = categoryStats[category] || 0;
           if (count === 0) return null;
-          
+
           const getCategoryIconForDashboard = (cat: string) => {
             const iconMap: Record<string, React.ReactElement> = {
               food: <UtensilsCrossed size={14} />,
@@ -199,7 +231,7 @@ export const StoresPage = () => {
             };
             return iconMap[cat] || <Package size={14} />;
           };
-          
+
           const getCategoryNumberColor = (cat: string): string => {
             const colors: Record<string, string> = {
               food: "text-orange-600",
@@ -216,14 +248,23 @@ export const StoresPage = () => {
             };
             return colors[cat] || "text-gray-600";
           };
-          
+
           return (
-            <div key={category} className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+            <div
+              key={category}
+              className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow"
+            >
               <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
                 {getCategoryIconForDashboard(category)}
                 <span className="font-medium">{label}</span>
               </div>
-              <div className={`text-2xl font-bold ${getCategoryNumberColor(category)}`}>{count}</div>
+              <div
+                className={`text-2xl font-bold ${getCategoryNumberColor(
+                  category
+                )}`}
+              >
+                {count}
+              </div>
             </div>
           );
         })}
@@ -243,7 +284,9 @@ export const StoresPage = () => {
         </div>
         <select
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value as StoreCategory | "all")}
+          onChange={(e) =>
+            setCategoryFilter(e.target.value as StoreCategory | "all")
+          }
           className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">Todas as categorias</option>
@@ -278,9 +321,7 @@ export const StoresPage = () => {
                 setIsModalOpen(false);
                 setSelectedStore(undefined);
               }}
-              isLoading={
-                createMutation.isPending || updateMutation.isPending
-              }
+              isLoading={createMutation.isPending || updateMutation.isPending}
             />
           </div>
         </div>

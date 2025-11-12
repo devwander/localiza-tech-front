@@ -1,21 +1,22 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import {
-  Plus,
-  Search,
-  Eye,
-  Pencil,
-  Trash2,
-  Share2,
-  Check,
   Building2,
+  Calendar,
+  Check,
+  Eye,
   Map as MapIcon,
   MapPin,
   Package,
-  Calendar,
+  Pencil,
+  Plus,
+  Search,
+  Share2,
+  Trash2,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { Loading } from "../../../components/loading";
+import { MapPreview } from "../../../components/map";
 import { CreateMapModal } from "../../../components/modal";
 import { useCreateMap, useDeleteMap } from "../../../mutation";
 import { useMaps } from "../../../queries";
@@ -44,8 +45,13 @@ export function MapList() {
 
   // Converter order para o formato da API
   const apiOrder = order === "a_z" || order === "z_a" ? "alphabetical" : order;
-  
-  const { data: rawData, isLoading, isError, error } = useMaps({
+
+  const {
+    data: rawData,
+    isLoading,
+    isError,
+    error,
+  } = useMaps({
     query: debouncedSearchQuery || undefined,
     page,
     limit: 10,
@@ -56,7 +62,7 @@ export function MapList() {
   let data = rawData;
   if (data && data.data) {
     let filteredData = [...data.data];
-    
+
     // Filtrar por tipo
     if (mapType !== "all") {
       filteredData = filteredData.filter((map) => {
@@ -64,14 +70,14 @@ export function MapList() {
         return mapTypeValue === mapType;
       });
     }
-    
+
     // Ordenar A-Z ou Z-A se necessário
     if (order === "a_z") {
       filteredData.sort((a, b) => a.name.localeCompare(b.name));
     } else if (order === "z_a") {
       filteredData.sort((a, b) => b.name.localeCompare(a.name));
     }
-    
+
     data = {
       ...data,
       data: filteredData,
@@ -167,8 +173,10 @@ export function MapList() {
 
   // Calcular estatísticas
   const totalMaps = rawData?.total || 0;
-  const totalSpaces = rawData?.data.reduce((sum, map) => sum + (map.features?.length || 0), 0) || 0;
-  const publishedMaps = rawData?.data.filter(map => map.type).length || 0;
+  const totalSpaces =
+    rawData?.data.reduce((sum, map) => sum + (map.features?.length || 0), 0) ||
+    0;
+  const publishedMaps = rawData?.data.filter((map) => map.type).length || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 mt-20">
@@ -206,21 +214,25 @@ export function MapList() {
             </div>
             <div className="text-2xl font-bold text-blue-600">{totalMaps}</div>
           </div>
-          
+
           <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
             <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
               <Package size={14} className="text-green-600" />
               <span className="font-medium">Total de Espaços</span>
             </div>
-            <div className="text-2xl font-bold text-green-600">{totalSpaces}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {totalSpaces}
+            </div>
           </div>
-          
+
           <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
             <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
               <MapPin size={14} className="text-purple-600" />
               <span className="font-medium">Mapas Publicados</span>
             </div>
-            <div className="text-2xl font-bold text-purple-600">{publishedMaps}</div>
+            <div className="text-2xl font-bold text-purple-600">
+              {publishedMaps}
+            </div>
           </div>
         </div>
 
@@ -317,26 +329,37 @@ export function MapList() {
               {data.data.map((map) => (
                 <div
                   key={map._id}
-                  className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200"
+                  className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden"
                 >
+                  {/* Map Preview */}
+                  <div className="w-full bg-gray-50 flex items-center justify-center p-4">
+                    <MapPreview map={map} width={280} height={180} />
+                  </div>
+
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 truncate">
                           {map.name}
                         </h3>
-                        {map.type && (() => {
-                          const type = map.type.toLowerCase();
-                          let badgeClass = "bg-green-100 text-green-800";
-                          if (type === "evento") badgeClass = "bg-pink-100 text-pink-800";
-                          else if (type === "shopping") badgeClass = "bg-blue-100 text-blue-800";
-                          
-                          return (
-                            <span className={`inline-flex items-center mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}>
-                              {map.type.charAt(0).toUpperCase() + map.type.slice(1)}
-                            </span>
-                          );
-                        })()}
+                        {map.type &&
+                          (() => {
+                            const type = map.type.toLowerCase();
+                            let badgeClass = "bg-green-100 text-green-800";
+                            if (type === "evento")
+                              badgeClass = "bg-pink-100 text-pink-800";
+                            else if (type === "shopping")
+                              badgeClass = "bg-blue-100 text-blue-800";
+
+                            return (
+                              <span
+                                className={`inline-flex items-center mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}
+                              >
+                                {map.type.charAt(0).toUpperCase() +
+                                  map.type.slice(1)}
+                              </span>
+                            );
+                          })()}
                       </div>
                     </div>
                     {map.metadata?.description && (
@@ -353,11 +376,14 @@ export function MapList() {
                         <Calendar size={14} />
                         <span>
                           {map.createdAt
-                            ? new Date(map.createdAt).toLocaleDateString("pt-BR", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric"
-                              })
+                            ? new Date(map.createdAt).toLocaleDateString(
+                                "pt-BR",
+                                {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                }
+                              )
                             : "Data desconhecida"}
                         </span>
                       </div>
