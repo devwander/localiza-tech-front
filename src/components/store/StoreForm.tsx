@@ -67,7 +67,7 @@ export const StoreForm = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="store-name" className="block text-sm font-medium text-gray-700 mb-1">
-          Nome da Loja *
+          Nome do Espaço *
         </label>
         <input
           type="text"
@@ -77,7 +77,7 @@ export const StoreForm = ({
           onChange={handleChange}
           required
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Ex: Loja ABC"
+          placeholder="Ex: Restaurante Bella Vista"
         />
       </div>
 
@@ -138,7 +138,7 @@ export const StoreForm = ({
       <ImageUpload
         value={formData.logo}
         onChange={(url) => setFormData((prev) => ({ ...prev, logo: url }))}
-        label="Logo/Ícone da Loja (Opcional)"
+        label="Logo/Ícone do Espaço (Opcional)"
         required={false}
       />
 
@@ -154,7 +154,7 @@ export const StoreForm = ({
           required
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Descreva a loja..."
+          placeholder="Descreva o espaço..."
         />
       </div>
 
@@ -185,7 +185,7 @@ export const StoreForm = ({
             value={formData.email}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="contato@loja.com"
+            placeholder="contato@espaco.com"
           />
         </div>
 
@@ -200,7 +200,7 @@ export const StoreForm = ({
             value={formData.website}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="https://loja.com"
+            placeholder="https://espaco.com"
           />
         </div>
       </div>

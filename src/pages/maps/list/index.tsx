@@ -1,20 +1,35 @@
-import { CheckIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import {
+  Plus,
+  Search,
+  Eye,
+  Pencil,
+  Trash2,
+  Share2,
+  Check,
+  Building2,
+  Map as MapIcon,
+  MapPin,
+  Package,
+  Calendar,
+} from "lucide-react";
 import { Loading } from "../../../components/loading";
 import { CreateMapModal } from "../../../components/modal";
 import { useCreateMap, useDeleteMap } from "../../../mutation";
 import { useMaps } from "../../../queries";
+
+type MapType = "all" | "feira" | "shopping" | "evento";
+type OrderType = "most_recent" | "oldest" | "a_z" | "z_a";
 
 export function MapList() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [order, setOrder] = useState<"alphabetical" | "most_recent" | "oldest">(
-    "most_recent"
-  );
+  const [order, setOrder] = useState<OrderType>("most_recent");
+  const [mapType, setMapType] = useState<MapType>("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copiedMapId, setCopiedMapId] = useState<string | null>(null);
 
@@ -27,12 +42,42 @@ export function MapList() {
     };
   }, [searchQuery]);
 
-  const { data, isLoading, isError, error } = useMaps({
+  // Converter order para o formato da API
+  const apiOrder = order === "a_z" || order === "z_a" ? "alphabetical" : order;
+  
+  const { data: rawData, isLoading, isError, error } = useMaps({
     query: debouncedSearchQuery || undefined,
     page,
     limit: 10,
-    order,
+    order: apiOrder as "alphabetical" | "most_recent" | "oldest",
   });
+
+  // Filtrar e ordenar dados
+  let data = rawData;
+  if (data && data.data) {
+    let filteredData = [...data.data];
+    
+    // Filtrar por tipo
+    if (mapType !== "all") {
+      filteredData = filteredData.filter((map) => {
+        const mapTypeValue = map.type?.toLowerCase();
+        return mapTypeValue === mapType;
+      });
+    }
+    
+    // Ordenar A-Z ou Z-A se necessário
+    if (order === "a_z") {
+      filteredData.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (order === "z_a") {
+      filteredData.sort((a, b) => b.name.localeCompare(a.name));
+    }
+    
+    data = {
+      ...data,
+      data: filteredData,
+      total: filteredData.length,
+    };
+  }
 
   const deleteMutation = useDeleteMap();
   const createMapMutation = useCreateMap();
@@ -120,6 +165,11 @@ export function MapList() {
     );
   }
 
+  // Calcular estatísticas
+  const totalMaps = rawData?.total || 0;
+  const totalSpaces = rawData?.data.reduce((sum, map) => sum + (map.features?.length || 0), 0) || 0;
+  const publishedMaps = rawData?.data.filter(map => map.type).length || 0;
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 mt-20">
       <CreateMapModal
@@ -134,39 +184,56 @@ export function MapList() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Meus Mapas</h1>
               <p className="mt-2 text-gray-600">
-                Gerencie seus mapas de feira e eventos
+                Gerencie seus mapas de feiras, polos comerciais e eventos.
               </p>
             </div>
             <button
               onClick={handleCreateNew}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <svg
-                className="mr-2 h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="mr-2 h-5 w-5" />
               Novo Mapa
             </button>
           </div>
         </div>
+
+        {/* Dashboard de Estatísticas */}
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+              <MapIcon size={14} className="text-blue-600" />
+              <span className="font-medium">Total de Mapas</span>
+            </div>
+            <div className="text-2xl font-bold text-blue-600">{totalMaps}</div>
+          </div>
+          
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+              <Package size={14} className="text-green-600" />
+              <span className="font-medium">Total de Espaços</span>
+            </div>
+            <div className="text-2xl font-bold text-green-600">{totalSpaces}</div>
+          </div>
+          
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+              <MapPin size={14} className="text-purple-600" />
+              <span className="font-medium">Mapas Publicados</span>
+            </div>
+            <div className="text-2xl font-bold text-purple-600">{publishedMaps}</div>
+          </div>
+        </div>
+
+        {/* Filtros e Busca */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
+            <div>
               <label htmlFor="search" className="sr-only">
                 Buscar mapas
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  {searchQuery !== debouncedSearchQuery ? (
+                  {debouncedSearchQuery !== searchQuery ? (
                     <svg
                       className="animate-spin h-5 w-5 text-blue-500"
                       xmlns="http://www.w3.org/2000/svg"
@@ -188,26 +255,14 @@ export function MapList() {
                       ></path>
                     </svg>
                   ) : (
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
+                    <Search className="h-5 w-5 text-gray-400" />
                   )}
                 </div>
                 <input
                   type="text"
                   id="search"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="Buscar por nome..."
+                  placeholder="Buscar mapa por nome..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -215,6 +270,25 @@ export function MapList() {
                   }}
                 />
               </div>
+            </div>
+            <div>
+              <label htmlFor="type" className="sr-only">
+                Filtrar por tipo
+              </label>
+              <select
+                id="type"
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                value={mapType}
+                onChange={(e) => {
+                  setMapType(e.target.value as MapType);
+                  setPage(1);
+                }}
+              >
+                <option value="all">Todos os tipos</option>
+                <option value="feira">Feira</option>
+                <option value="shopping">Shopping</option>
+                <option value="evento">Evento</option>
+              </select>
             </div>
             <div>
               <label htmlFor="order" className="sr-only">
@@ -225,15 +299,14 @@ export function MapList() {
                 className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                 value={order}
                 onChange={(e) => {
-                  setOrder(
-                    e.target.value as "alphabetical" | "most_recent" | "oldest"
-                  );
+                  setOrder(e.target.value as OrderType);
                   setPage(1);
                 }}
               >
                 <option value="most_recent">Mais recentes</option>
                 <option value="oldest">Mais antigos</option>
-                <option value="alphabetical">Alfabética</option>
+                <option value="a_z">A-Z</option>
+                <option value="z_a">Z-A</option>
               </select>
             </div>
           </div>
@@ -248,35 +321,46 @@ export function MapList() {
                 >
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate flex-1">
-                        {map.name}
-                      </h3>
-                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {map.features.length} elementos
-                      </span>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">
+                          {map.name}
+                        </h3>
+                        {map.type && (() => {
+                          const type = map.type.toLowerCase();
+                          let badgeClass = "bg-green-100 text-green-800";
+                          if (type === "evento") badgeClass = "bg-pink-100 text-pink-800";
+                          else if (type === "shopping") badgeClass = "bg-blue-100 text-blue-800";
+                          
+                          return (
+                            <span className={`inline-flex items-center mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}>
+                              {map.type.charAt(0).toUpperCase() + map.type.slice(1)}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </div>
                     {map.metadata?.description && (
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                         {map.metadata.description}
                       </p>
                     )}
-                    <div className="flex items-center text-xs text-gray-500 mb-4">
-                      <svg
-                        className="mr-1 h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      {map.createdAt
-                        ? new Date(map.createdAt).toLocaleDateString("pt-BR")
-                        : "Data desconhecida"}
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                      <div className="flex items-center gap-1">
+                        <MapPin size={14} />
+                        <span>{map.features.length} espaços cadastrados</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar size={14} />
+                        <span>
+                          {map.createdAt
+                            ? new Date(map.createdAt).toLocaleDateString("pt-BR", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric"
+                              })
+                            : "Data desconhecida"}
+                        </span>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex space-x-2">
@@ -284,44 +368,14 @@ export function MapList() {
                           onClick={() => handleView(map._id)}
                           className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
-                          <svg
-                            className="mr-1 h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            />
-                          </svg>
+                          <Eye className="mr-1 h-4 w-4" />
                           Visualizar
                         </button>
                         <button
                           onClick={() => handleEdit(map._id)}
                           className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
-                          <svg
-                            className="mr-1 h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
+                          <Pencil className="mr-1 h-4 w-4" />
                           Editar
                         </button>
                         <button
@@ -330,9 +384,9 @@ export function MapList() {
                           title="Compartilhar link público"
                         >
                           {copiedMapId === map._id ? (
-                            <CheckIcon className="h-4 w-4 text-green-600" />
+                            <Check className="h-4 w-4 text-green-600" />
                           ) : (
-                            <ShareIcon className="h-4 w-4" />
+                            <Share2 className="h-4 w-4" />
                           )}
                         </button>
                         <button
@@ -340,39 +394,15 @@ export function MapList() {
                           disabled={deleteMutation.isPending}
                           className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                       <button
                         onClick={() => handleManageStores(map._id)}
-                        className="w-full inline-flex justify-center items-center px-3 py-2 border border-purple-300 text-sm font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                        className="w-full inline-flex justify-center items-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
-                        <svg
-                          className="mr-1 h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                          />
-                        </svg>
-                        Gerenciar Lojas
+                        <Building2 className="mr-1 h-4 w-4" />
+                        Gerenciar Espaços
                       </button>
                     </div>
                   </div>
@@ -413,43 +443,19 @@ export function MapList() {
           </>
         ) : (
           <div className="bg-white rounded-lg shadow p-12 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-              />
-            </svg>
+            <MapIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
               Nenhum mapa encontrado
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Comece criando um novo mapa de feira.
+              Comece criando um novo mapa de feira, shopping ou evento.
             </p>
             <div className="mt-6">
               <button
                 onClick={handleCreateNew}
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+                <Plus className="mr-2 h-5 w-5" />
                 Criar Novo Mapa
               </button>
             </div>
