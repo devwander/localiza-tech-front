@@ -33,6 +33,42 @@ export function PropertiesPanel({
     storeId: "",
   });
 
+  // Função para copiar informações da loja quando vinculada
+  const handleStoreLink = (storeId: string) => {
+    const selectedStore = storesData?.data?.find((s) => s._id === storeId);
+    
+    if (selectedStore && selectedElement) {
+      // Copiar o nome da loja para o nome do elemento
+      setFormData((prev) => ({
+        ...prev,
+        storeId,
+        name: selectedStore.name,
+      }));
+      
+      // Atualizar imediatamente o elemento com as novas informações
+      onUpdateElement(selectedElement.id, {
+        name: selectedStore.name,
+        storeId: storeId || undefined,
+        storeName: selectedStore.name,
+        storeCategory: selectedStore.category,
+        storeLogo: selectedStore.logo || undefined,
+      });
+    } else if (!storeId) {
+      // Se desvincular, limpar as informações da loja
+      setFormData((prev) => ({ ...prev, storeId: "" }));
+      if (selectedElement) {
+        onUpdateElement(selectedElement.id, {
+          storeId: undefined,
+          storeName: undefined,
+          storeCategory: undefined,
+          storeLogo: undefined,
+        });
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, storeId }));
+    }
+  };
+
   // Atualizar form quando elemento selecionado mudar
   useEffect(() => {
     if (selectedElement) {
@@ -172,9 +208,7 @@ export function PropertiesPanel({
               </label>
               <select
                 value={formData.storeId || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, storeId: e.target.value })
-                }
+                onChange={(e) => handleStoreLink(e.target.value)}
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Sem vínculo</option>
@@ -185,7 +219,7 @@ export function PropertiesPanel({
                 ))}
               </select>
               <p className="mt-1 text-xs text-gray-500">
-                Vincule este espaço a uma loja cadastrada
+                Vincule este espaço a uma loja cadastrada. O nome será copiado automaticamente.
               </p>
             </div>
           )}

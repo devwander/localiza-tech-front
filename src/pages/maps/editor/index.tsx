@@ -10,13 +10,14 @@ import { Loading } from "../../../components/loading";
 import { ConfirmExitModal } from "../../../components/modal";
 import { useFairMapper } from "../../../hooks/useFairMapper";
 import { useCreateMap, useUpdateMap } from "../../../mutation";
-import { useMap } from "../../../queries";
+import { useMap, useStoresQuery } from "../../../queries";
 import { Service } from "../../../services";
 import {
   apiFormatToLayers,
   layersToApiFormat,
   layersToUpdateFormat,
 } from "../../../utils/map-converter";
+import { enrichLayersWithStoreData } from "../../../utils/store-enrichment";
 
 export function MapEditor() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,12 @@ export function MapEditor() {
     isLoading,
     isError,
   } = useMap(isNewMap ? undefined : id);
+  
+  // Buscar lojas do mapa para enriquecer os elementos
+  const { data: storesData } = useStoresQuery(
+    !isNewMap && id ? { mapId: id, limit: 1000 } : undefined
+  );
+  
   const createMutation = useCreateMap();
   const updateMutation = useUpdateMap();
 
@@ -53,7 +60,15 @@ export function MapEditor() {
     if (mapData && !hasLoadedMap.current && !isNewMap) {
       console.log("[MapEditor] Loading map from API:", mapData);
       console.log("[MapEditor] Map has features:", mapData.features?.length);
-      const { layers, nextId } = apiFormatToLayers(mapData);
+      const { layers: initialLayers, nextId } = apiFormatToLayers(mapData);
+      
+      // Enriquecer os elementos com informações das lojas vinculadas
+      let layers = initialLayers;
+      if (storesData?.data && storesData.data.length > 0) {
+        console.log("[MapEditor] Enriching layers with store data:", storesData.data.length);
+        layers = enrichLayersWithStoreData(initialLayers, storesData.data);
+      }
+      
       console.log("[MapEditor] Converted layers:", {
         background: layers.background.length,
         submaps: layers.submaps.length,
@@ -66,7 +81,7 @@ export function MapEditor() {
       hasLoadedMap.current = true;
       setHasUnsavedChanges(false);
     }
-  }, [mapData, isNewMap, fairMapper, id]);
+  }, [mapData, isNewMap, fairMapper, id, storesData]);
 
   // Marcar alterações não salvas quando layers mudam
   useEffect(() => {
