@@ -169,16 +169,15 @@ export function useFairMapper(): UseFairMapperReturn {
       const height = Math.abs(endY - startY);
 
       // debug: log dimensions
-
-      console.debug("[FairMapper] createNewElement dims", {
+      console.log("[FairMapper] createNewElement - Coordinates:", {
         startX,
         startY,
         endX,
         endY,
-        x,
-        y,
-        width,
-        height,
+        calculated_x: x,
+        calculated_y: y,
+        calculated_width: width,
+        calculated_height: height,
         layer,
       });
 
@@ -209,6 +208,16 @@ export function useFairMapper(): UseFairMapperReturn {
           element = ElementUtils.createLocationElement(id, x, y, width, height);
           break;
       }
+
+      console.log("[FairMapper] Created element:", {
+        id: element.id,
+        name: element.name,
+        x: element.x,
+        y: element.y,
+        width: element.width,
+        height: element.height,
+        layer: element.layer,
+      });
 
       setLayers((prev) => LayerUtils.addElement(prev, element));
       setSelectedElement(element);

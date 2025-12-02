@@ -20,6 +20,16 @@ import type {
  * Converts a FairMapper element to a GeoJSON feature
  */
 function mapElementToFeature(element: MapElement): MapFeature {
+  console.log("[mapElementToFeature] Converting element:", {
+    id: element.id,
+    name: element.name,
+    x: element.x,
+    y: element.y,
+    width: element.width,
+    height: element.height,
+    layer: element.layer,
+  });
+
   // Convert element bounds to GeoJSON Polygon coordinates
   const coordinates = [
     [
@@ -30,6 +40,8 @@ function mapElementToFeature(element: MapElement): MapFeature {
       [element.x, element.y], // Close the polygon
     ],
   ];
+
+  console.log("[mapElementToFeature] Generated coordinates:", coordinates);
 
   // Map FairMapper layer types to API types
   let apiType: "background" | "submapa" | "local";
@@ -43,11 +55,11 @@ function mapElementToFeature(element: MapElement): MapFeature {
     apiType = "background"; // Fallback
   }
 
-  return {
-    type: "Feature",
+  const feature = {
+    type: "Feature" as const,
     id: element.id.toString(),
     geometry: {
-      type: "Polygon",
+      type: "Polygon" as const,
       coordinates,
     },
     properties: {
@@ -69,6 +81,13 @@ function mapElementToFeature(element: MapElement): MapFeature {
       }),
     },
   };
+
+  console.log(
+    "[mapElementToFeature] Created feature:",
+    JSON.stringify(feature, null, 2)
+  );
+
+  return feature;
 }
 
 /**
