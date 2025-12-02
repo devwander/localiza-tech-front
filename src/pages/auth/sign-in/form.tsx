@@ -143,11 +143,6 @@ export function Form() {
             {isPending ? "Entrando..." : "Entrar"}
           </button>
         </div>
-        <div>
-          <a href="#" className="text-[#1E90FF] ">
-            Esqueci minha senha
-          </a>
-        </div>
         <div className="flex gap-[5px]">
           <p>OU</p>
         </div>
