@@ -32,12 +32,6 @@ export function MapPublicView() {
 
   // Render canvas callback
   const renderCanvas = useCallback((): void => {
-    console.log("[MapPublicView] renderCanvas called with layers:", {
-      background: layers.background.length,
-      submaps: layers.submaps.length,
-      locations: layers.locations.length,
-    });
-
     render(layers, null, false);
   }, [layers, render]);
 
@@ -45,14 +39,7 @@ export function MapPublicView() {
   useEffect(() => {
     if (!mapData) return;
 
-    console.log("[MapPublicView] Loading map:", mapData.name);
     const { layers: convertedLayers } = apiFormatToLayers(mapData);
-
-    console.log("[MapPublicView] Layers loaded:", {
-      background: convertedLayers.background.length,
-      submaps: convertedLayers.submaps.length,
-      locations: convertedLayers.locations.length,
-    });
 
     layersRef.current = convertedLayers;
     setLayers(convertedLayers);
@@ -66,7 +53,6 @@ export function MapPublicView() {
   // Listen for canvas resize events
   useEffect(() => {
     const handleCanvasResize = () => {
-      console.log("[MapPublicView] Canvas resized, re-rendering");
       renderCanvas();
     };
 

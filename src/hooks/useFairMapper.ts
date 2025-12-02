@@ -124,20 +124,9 @@ export function useFairMapper(): UseFairMapperReturn {
    */
   const updateElement = useCallback(
     (id: number, updates: Partial<MapElement>): void => {
-      console.log("[FairMapper] updateElement called", { id, updates });
-
       setLayers((prev) => {
         const updated = LayerUtils.updateElement(prev, id, updates);
-        console.log("[FairMapper] Layers before:", {
-          background: prev.background.length,
-          submaps: prev.submaps.length,
-          locations: prev.locations.length,
-        });
-        console.log("[FairMapper] Layers after:", {
-          background: updated.background.length,
-          submaps: updated.submaps.length,
-          locations: updated.locations.length,
-        });
+
         return updated;
       });
 
@@ -168,19 +157,6 @@ export function useFairMapper(): UseFairMapperReturn {
       const width = Math.abs(endX - startX);
       const height = Math.abs(endY - startY);
 
-      // debug: log dimensions
-      console.log("[FairMapper] createNewElement - Coordinates:", {
-        startX,
-        startY,
-        endX,
-        endY,
-        calculated_x: x,
-        calculated_y: y,
-        calculated_width: width,
-        calculated_height: height,
-        layer,
-      });
-
       if (width < 10 || height < 10) {
         console.debug(
           "[FairMapper] createNewElement aborted: element too small"
@@ -208,16 +184,6 @@ export function useFairMapper(): UseFairMapperReturn {
           element = ElementUtils.createLocationElement(id, x, y, width, height);
           break;
       }
-
-      console.log("[FairMapper] Created element:", {
-        id: element.id,
-        name: element.name,
-        x: element.x,
-        y: element.y,
-        width: element.width,
-        height: element.height,
-        layer: element.layer,
-      });
 
       setLayers((prev) => LayerUtils.addElement(prev, element));
       setSelectedElement(element);
@@ -562,18 +528,6 @@ export function useFairMapper(): UseFairMapperReturn {
    */
   const loadLayers = useCallback(
     (newLayers: MapLayers, nextId?: number, mapId?: string): void => {
-      console.log("[FairMapper] loadLayers called with:", {
-        background: newLayers.background.length,
-        submaps: newLayers.submaps.length,
-        locations: newLayers.locations.length,
-        nextId,
-        mapId,
-      });
-
-      // SEMPRE usa os dados fornecidos (da API)
-      console.log(
-        "[FairMapper] Loading layers from API (always uses latest from database)"
-      );
       setLayers(newLayers);
       if (nextId !== undefined) {
         nextIdRef.current = nextId;

@@ -33,7 +33,6 @@ export function Router(): ReactElement {
       (response) => response,
       (error) => {
         if (isAxiosError(error)) {
-          console.log(error);
           const status = error.response?.status;
           const message = error.response?.data?.message;
 

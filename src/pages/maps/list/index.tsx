@@ -51,10 +51,6 @@ export function MapList() {
   // Buscar tags disponíveis
   const { data: availableTags, isLoading: isLoadingTags } = useMapTags();
 
-  // Debug: log das tags
-  console.log("[MapList] Available tags:", availableTags);
-  console.log("[MapList] Is loading tags:", isLoadingTags);
-
   const { data, isLoading, isError, error } = useMaps({
     query: debouncedSearchQuery || undefined,
     tags: mapType !== "all" ? mapType : undefined,

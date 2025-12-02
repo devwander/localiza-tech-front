@@ -40,9 +40,6 @@ export function MapEditor() {
 
   const createMutation = useCreateMap();
   const updateMutation = useUpdateMap();
-
-  console.log("Map data:", mapData);
-
   const fairMapper = useFairMapper();
   const hasLoadedMap = useRef(false);
   const skipNextLayerChange = useRef(true);
@@ -62,8 +59,6 @@ export function MapEditor() {
   // Load map data from API when available
   useEffect(() => {
     if (mapData && !hasLoadedMap.current && !isNewMap) {
-      console.log("[MapEditor] Loading map from API:", mapData);
-      console.log("[MapEditor] Map has features:", mapData.features?.length);
       const { layers: initialLayers, nextId } = apiFormatToLayers(mapData);
 
       // Carregar tags do mapa
@@ -72,19 +67,9 @@ export function MapEditor() {
       // Enriquecer os elementos com informações das lojas vinculadas
       let layers = initialLayers;
       if (storesData?.data && storesData.data.length > 0) {
-        console.log(
-          "[MapEditor] Enriching layers with store data:",
-          storesData.data.length
-        );
         layers = enrichLayersWithStoreData(initialLayers, storesData.data);
       }
 
-      console.log("[MapEditor] Converted layers:", {
-        background: layers.background.length,
-        submaps: layers.submaps.length,
-        locations: layers.locations.length,
-        nextId,
-      });
       // Sempre carregar do banco de dados (cache foi limpo no loadLayers)
       skipNextLayerChange.current = true;
       fairMapper.loadLayers(layers, nextId, id);
@@ -139,26 +124,11 @@ export function MapEditor() {
         navigate(`/dashboard/maps/${newMap._id}`, { replace: true });
       } else if (id) {
         // Update existing map - only save layers, keep the name
-        console.log("[MapEditor] Updating map with layers:", fairMapper.layers);
         const updateData = layersToUpdateFormat(fairMapper.layers);
 
         // Adicionar tags ao updateData
         if (mapTags.length > 0) {
           updateData.tags = mapTags;
-        }
-
-        console.log("[MapEditor] Update data being sent:", updateData);
-        console.log("[MapEditor] Total features:", updateData.features?.length);
-
-        if (updateData.features && updateData.features.length > 0) {
-          console.log(
-            "[MapEditor] First feature to send:",
-            JSON.stringify(updateData.features[0], null, 2)
-          );
-          console.log(
-            "[MapEditor] First feature coordinates:",
-            updateData.features[0].geometry?.coordinates
-          );
         }
 
         await updateMutation.mutateAsync({ id, data: updateData });

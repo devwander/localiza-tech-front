@@ -117,16 +117,6 @@ export class LayerUtils {
       const updated = elements.map((el) => {
         if (el.id === elementId) {
           const result = { ...el, ...updates } as T;
-          console.log(`[LayerUtils] Updating element ${el.id}:`, {
-            before: { x: el.x, y: el.y, width: el.width, height: el.height },
-            updates,
-            after: {
-              x: result.x,
-              y: result.y,
-              width: result.width,
-              height: result.height,
-            },
-          });
           return result;
         }
         return el;

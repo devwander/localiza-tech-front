@@ -14,29 +14,24 @@ const testStoreData = {
     x: 100,
     y: 200,
     width: 50,
-    height: 50
-  }
+    height: 50,
+  },
 };
-
-console.log("Dados de teste:", testStoreData);
 
 // Testar criação
 fetch("http://localhost:3000/stores", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+    Authorization: `Bearer ${sessionStorage.getItem("token")}`,
   },
   credentials: "include",
-  body: JSON.stringify(testStoreData)
+  body: JSON.stringify(testStoreData),
 })
-.then(response => {
-  console.log("Status:", response.status);
-  return response.json();
-})
-.then(data => {
-  console.log("Resposta:", data);
-})
-.catch(error => {
-  console.error("Erro:", error);
-});
+  .then((response) => {
+    return response.json();
+  })
+  .then((data) => {})
+  .catch((error) => {
+    console.error("Erro:", error);
+  });

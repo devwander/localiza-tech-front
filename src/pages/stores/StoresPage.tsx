@@ -111,8 +111,6 @@ export const StoresPage = () => {
           logo: data.logo || "", // Garantir que logo não seja undefined
         };
 
-        console.log("Enviando dados:", createData); // Debug
-
         await createMutation.mutateAsync(createData);
         toast.success("Espaço criado com sucesso!");
       }

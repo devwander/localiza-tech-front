@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
 import type { ChangeEvent } from "react";
+import { useRef, useState } from "react";
 
 interface ImageUploadProps {
   value?: string;
@@ -33,7 +33,9 @@ export const ImageUpload = ({
     // Validar tamanho (3MB - tamanho razoável para logos)
     const maxSize = 3 * 1024 * 1024;
     if (file.size > maxSize) {
-      setError("Arquivo muito grande. Tamanho máximo: 3MB. Tente comprimir a imagem.");
+      setError(
+        "Arquivo muito grande. Tamanho máximo: 3MB. Tente comprimir a imagem."
+      );
       return;
     }
 
@@ -48,36 +50,34 @@ export const ImageUpload = ({
           const base64String = reader.result as string;
           setPreview(base64String);
 
-          console.log("Iniciando upload da imagem...");
-
           // Pegar o token do auth store no sessionStorage
           const authData = sessionStorage.getItem("auth");
           const token = authData ? JSON.parse(authData).state.token : null;
-          
-          console.log("Token encontrado:", token ? "Sim" : "Não");
 
           // Enviar para o servidor
-          const response = await fetch("http://localhost:3000/stores/upload-logo-base64", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            credentials: "include",
-            body: JSON.stringify({ image: base64String }),
-          });
-
-          console.log("Response status:", response.status);
+          const response = await fetch(
+            "http://localhost:3000/stores/upload-logo-base64",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              credentials: "include",
+              body: JSON.stringify({ image: base64String }),
+            }
+          );
 
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error("Erro do servidor:", errorData);
-            throw new Error(errorData.message || "Erro ao fazer upload da imagem");
+            throw new Error(
+              errorData.message || "Erro ao fazer upload da imagem"
+            );
           }
 
           const data = await response.json();
-          console.log("Upload concluído:", data);
-          
+
           const imageUrl = `http://localhost:3000${data.url}`;
           onChange(imageUrl);
           setIsUploading(false);
@@ -169,8 +169,8 @@ export const ImageUpload = ({
                       />
                     </svg>
                     <p className="mb-1 text-sm text-gray-500">
-                      <span className="font-semibold">Clique para enviar</span> ou
-                      arraste
+                      <span className="font-semibold">Clique para enviar</span>{" "}
+                      ou arraste
                     </p>
                     <p className="text-xs text-gray-500">
                       PNG, JPG, GIF ou WebP (máx. 3MB)

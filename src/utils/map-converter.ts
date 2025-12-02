@@ -20,16 +20,6 @@ import type {
  * Converts a FairMapper element to a GeoJSON feature
  */
 function mapElementToFeature(element: MapElement): MapFeature {
-  console.log("[mapElementToFeature] Converting element:", {
-    id: element.id,
-    name: element.name,
-    x: element.x,
-    y: element.y,
-    width: element.width,
-    height: element.height,
-    layer: element.layer,
-  });
-
   // Convert element bounds to GeoJSON Polygon coordinates
   const coordinates = [
     [
@@ -40,8 +30,6 @@ function mapElementToFeature(element: MapElement): MapFeature {
       [element.x, element.y], // Close the polygon
     ],
   ];
-
-  console.log("[mapElementToFeature] Generated coordinates:", coordinates);
 
   // Map FairMapper layer types to API types
   let apiType: "background" | "submapa" | "local";
@@ -81,11 +69,6 @@ function mapElementToFeature(element: MapElement): MapFeature {
       }),
     },
   };
-
-  console.log(
-    "[mapElementToFeature] Created feature:",
-    JSON.stringify(feature, null, 2)
-  );
 
   return feature;
 }
@@ -260,22 +243,9 @@ export function apiFormatToLayers(apiMap: ApiMap): {
     };
   }
 
-  console.log(
-    "[apiFormatToLayers] Processing",
-    apiMap.features.length,
-    "features"
-  );
-
   for (const feature of apiMap.features) {
     const element = featureToMapElement(feature);
     if (element) {
-      console.log("[apiFormatToLayers] Converted feature to element:", {
-        id: element.id,
-        name: element.name,
-        layer: element.layer,
-        type: element.type,
-      });
-
       if (element.layer === "background") {
         layers.background.push(element as BackgroundElement);
       } else if (element.layer === "submaps") {
@@ -288,13 +258,6 @@ export function apiFormatToLayers(apiMap: ApiMap): {
       console.warn("[apiFormatToLayers] Failed to convert feature:", feature);
     }
   }
-
-  console.log("[apiFormatToLayers] Result:", {
-    background: layers.background.length,
-    submaps: layers.submaps.length,
-    locations: layers.locations.length,
-    nextId: maxId + 1,
-  });
 
   return {
     layers,
@@ -312,18 +275,7 @@ export function layersToUpdateFormat(layers: MapLayers): UpdateMapRequest {
     ...layers.locations,
   ];
 
-  console.log("[map-converter] layersToUpdateFormat input:", {
-    background: layers.background.length,
-    submaps: layers.submaps.length,
-    locations: layers.locations.length,
-    total: allElements.length,
-  });
-
   const features = allElements.map(mapElementToFeature);
-
-  console.log("[map-converter] layersToUpdateFormat output:", {
-    featuresCount: features.length,
-  });
 
   return { features };
 }

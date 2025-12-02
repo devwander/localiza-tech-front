@@ -12,10 +12,7 @@ import type {
 export default class MapService {
   // Get all unique tags used by the authenticated user
   public async findAllTags(): Promise<string[]> {
-    console.log("[MapService.findAllTags] Calling API...");
     const response = await api.get<string[]>("maps/tags");
-    console.log("[MapService.findAllTags] Response:", response);
-    console.log("[MapService.findAllTags] Data:", response.data);
     return response.data;
   }
 

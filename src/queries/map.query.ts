@@ -6,9 +6,7 @@ export const useMapTags = () => {
   return useQuery({
     queryKey: ["map-tags"],
     queryFn: async () => {
-      console.log("[useMapTags] Fetching tags from API...");
       const result = await Service.map.findAllTags();
-      console.log("[useMapTags] Tags received:", result);
       return result;
     },
     staleTime: 0, // Sempre buscar do servidor para debug
