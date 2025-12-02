@@ -21,9 +21,9 @@ import { CreateMapModal } from "../../../components/modal";
 import type { MapTag } from "../../../models";
 import { MapTagColors, MapTagLabels } from "../../../models";
 import { useCreateMap, useDeleteMap } from "../../../mutation";
-import { useMaps } from "../../../queries";
+import { useMaps, useMapTags } from "../../../queries";
 
-type MapType = "all" | "feira" | "shopping" | "evento";
+type MapType = "all" | string;
 type OrderType = "most_recent" | "oldest" | "a_z" | "z_a";
 
 export function MapList() {
@@ -48,42 +48,33 @@ export function MapList() {
   // Converter order para o formato da API
   const apiOrder = order === "a_z" || order === "z_a" ? "alphabetical" : order;
 
-  const {
-    data: rawData,
-    isLoading,
-    isError,
-    error,
-  } = useMaps({
+  // Buscar tags disponíveis
+  const { data: availableTags, isLoading: isLoadingTags } = useMapTags();
+
+  // Debug: log das tags
+  console.log("[MapList] Available tags:", availableTags);
+  console.log("[MapList] Is loading tags:", isLoadingTags);
+
+  const { data, isLoading, isError, error } = useMaps({
     query: debouncedSearchQuery || undefined,
+    tags: mapType !== "all" ? mapType : undefined,
     page,
     limit: 10,
     order: apiOrder as "alphabetical" | "most_recent" | "oldest",
   });
 
-  // Filtrar e ordenar dados
-  let data = rawData;
-  if (data && data.data) {
-    let filteredData = [...data.data];
-
-    // Filtrar por tipo
-    if (mapType !== "all") {
-      filteredData = filteredData.filter((map) => {
-        const mapTypeValue = map.type?.toLowerCase();
-        return mapTypeValue === mapType;
-      });
-    }
-
-    // Ordenar A-Z ou Z-A se necessário
+  // Ordenar A-Z ou Z-A no frontend se necessário
+  let displayData = data;
+  if (data && data.data && (order === "a_z" || order === "z_a")) {
+    const sortedData = [...data.data];
     if (order === "a_z") {
-      filteredData.sort((a, b) => a.name.localeCompare(b.name));
+      sortedData.sort((a, b) => a.name.localeCompare(b.name));
     } else if (order === "z_a") {
-      filteredData.sort((a, b) => b.name.localeCompare(a.name));
+      sortedData.sort((a, b) => b.name.localeCompare(a.name));
     }
-
-    data = {
+    displayData = {
       ...data,
-      data: filteredData,
-      total: filteredData.length,
+      data: sortedData,
     };
   }
 
@@ -179,11 +170,11 @@ export function MapList() {
   }
 
   // Calcular estatísticas
-  const totalMaps = rawData?.total || 0;
+  const totalMaps = data?.total || 0;
   const totalSpaces =
-    rawData?.data.reduce((sum, map) => sum + (map.features?.length || 0), 0) ||
-    0;
-  const publishedMaps = rawData?.data.filter((map) => map.type).length || 0;
+    data?.data.reduce((sum, map) => sum + (map.features?.length || 0), 0) || 0;
+  const publishedMaps =
+    data?.data.filter((map) => map.tags && map.tags.length > 0).length || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 mt-20">
@@ -302,11 +293,21 @@ export function MapList() {
                   setMapType(e.target.value as MapType);
                   setPage(1);
                 }}
+                disabled={isLoadingTags}
               >
-                <option value="all">Todos os tipos</option>
-                <option value="feira">Feira</option>
-                <option value="shopping">Shopping</option>
-                <option value="evento">Evento</option>
+                <option value="all">
+                  {isLoadingTags ? "Carregando..." : "Todos os tipos"}
+                </option>
+                {availableTags && availableTags.length > 0
+                  ? availableTags.map((tag) => (
+                      <option key={tag} value={tag}>
+                        {MapTagLabels[tag as MapTag] ||
+                          tag.charAt(0).toUpperCase() + tag.slice(1)}
+                      </option>
+                    ))
+                  : !isLoadingTags && (
+                      <option disabled>Nenhuma tag disponível</option>
+                    )}
               </select>
             </div>
             <div>
@@ -330,10 +331,10 @@ export function MapList() {
             </div>
           </div>
         </div>
-        {data && data.data.length > 0 ? (
+        {displayData && displayData.data.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {data.data.map((map) => (
+              {displayData.data.map((map) => (
                 <div
                   key={map._id}
                   className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden"
@@ -454,15 +455,15 @@ export function MapList() {
                 </div>
               ))}
             </div>
-            {data.totalPages > 1 && (
+            {displayData.totalPages > 1 && (
               <div className="mt-8 flex items-center justify-between">
                 <div className="text-sm text-gray-700">
                   Mostrando{" "}
                   <span className="font-medium">{(page - 1) * 10 + 1}</span> a{" "}
                   <span className="font-medium">
-                    {Math.min(page * 10, data.total)}
+                    {Math.min(page * 10, displayData.total)}
                   </span>{" "}
-                  de <span className="font-medium">{data.total}</span>{" "}
+                  de <span className="font-medium">{displayData.total}</span>{" "}
                   resultados
                 </div>
                 <div className="flex space-x-2">
@@ -475,9 +476,9 @@ export function MapList() {
                   </button>
                   <button
                     onClick={() =>
-                      setPage((p) => Math.min(data.totalPages, p + 1))
+                      setPage((p) => Math.min(displayData.totalPages, p + 1))
                     }
-                    disabled={page === data.totalPages}
+                    disabled={page === displayData.totalPages}
                     className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Próxima

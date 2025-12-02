@@ -2,11 +2,27 @@ import { useQuery } from "@tanstack/react-query";
 import type { FindMapsRequest } from "../models";
 import { Service } from "../services";
 
+export const useMapTags = () => {
+  return useQuery({
+    queryKey: ["map-tags"],
+    queryFn: async () => {
+      console.log("[useMapTags] Fetching tags from API...");
+      const result = await Service.map.findAllTags();
+      console.log("[useMapTags] Tags received:", result);
+      return result;
+    },
+    staleTime: 0, // Sempre buscar do servidor para debug
+    gcTime: 0,
+    refetchOnMount: "always",
+  });
+};
+
 export const useMaps = (params?: FindMapsRequest) => {
   const queryKey = [
     "maps",
     {
       query: params?.query ?? "",
+      tags: params?.tags ?? "",
       page: params?.page ?? 1,
       limit: params?.limit ?? 10,
       order: params?.order ?? "",

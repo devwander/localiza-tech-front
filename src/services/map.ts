@@ -10,6 +10,15 @@ import type {
 } from "../models/map.model";
 
 export default class MapService {
+  // Get all unique tags used by the authenticated user
+  public async findAllTags(): Promise<string[]> {
+    console.log("[MapService.findAllTags] Calling API...");
+    const response = await api.get<string[]>("maps/tags");
+    console.log("[MapService.findAllTags] Response:", response);
+    console.log("[MapService.findAllTags] Data:", response.data);
+    return response.data;
+  }
+
   // List all maps for the authenticated user
   public async findAll(params?: FindMapsRequest): Promise<FindMapsResponse> {
     const { data } = await api.get<FindMapsResponse>("maps", { params });

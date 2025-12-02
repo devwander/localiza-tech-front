@@ -9,6 +9,7 @@ export const useCreateMap = () => {
     mutationFn: (data: CreateMapRequest) => Service.map.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["maps"] });
+      queryClient.invalidateQueries({ queryKey: ["map-tags"] });
     },
   });
 };
@@ -22,6 +23,7 @@ export const useUpdateMap = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["maps"] });
       queryClient.invalidateQueries({ queryKey: ["map", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["map-tags"] });
     },
   });
 };
@@ -34,6 +36,7 @@ export const useDeleteMap = () => {
     onSuccess: () => {
       // Invalidate maps list to refetch
       queryClient.invalidateQueries({ queryKey: ["maps"] });
+      queryClient.invalidateQueries({ queryKey: ["map-tags"] });
     },
   });
 };

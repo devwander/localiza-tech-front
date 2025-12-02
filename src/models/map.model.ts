@@ -122,6 +122,7 @@ export interface UpdateMapRequest {
 
 export interface FindMapsRequest {
   query?: string;
+  tags?: string;
   page?: number;
   limit?: number;
   order?: "alphabetical" | "most_recent" | "oldest";
