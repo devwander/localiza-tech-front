@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import React from "react";
 import type {
   DebugInfo,
   LayerType,
   MapElement,
   MapLayers,
 } from "../types/fair-mapper";
+import { getCategoryEmoji } from "./category-icons";
 import { ColorUtils } from "./layer-utils";
 
 const LAYER_CONFIG = {
@@ -35,6 +37,7 @@ export class CanvasRenderer {
     width: number;
     height: number;
   } | null = null;
+  private imageCache: Map<string, HTMLImageElement> = new Map();
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -54,13 +57,6 @@ export class CanvasRenderer {
     debugMode: boolean = false,
     debugInfo?: DebugInfo
   ): void {
-    console.log("[CanvasRenderer] render called with:", {
-      background: layers.background.length,
-      submaps: layers.submaps.length,
-      locations: layers.locations.length,
-      selectedElement: selectedElement?.id,
-    });
-
     this.clearCanvas();
 
     // Calculate bounding box and apply transform to center content
@@ -72,6 +68,9 @@ export class CanvasRenderer {
 
     if (allElements.length > 0) {
       this.centerContent(allElements);
+    } else {
+      // No elements to render, just return
+      return;
     }
 
     // Draw background image first (if present)
@@ -169,6 +168,19 @@ export class CanvasRenderer {
    * Desenha um elemento individual
    */
   private drawElement(element: MapElement): void {
+    // Validar valores antes de desenhar
+    if (
+      !isFinite(element.x) ||
+      !isFinite(element.y) ||
+      !isFinite(element.width) ||
+      !isFinite(element.height) ||
+      element.width <= 0 ||
+      element.height <= 0
+    ) {
+      console.warn("[CanvasRenderer] Skipping invalid element:", element);
+      return;
+    }
+
     // Corpo do elemento
     this.ctx.fillStyle = element.color;
     this.ctx.fillRect(element.x, element.y, element.width, element.height);
@@ -185,6 +197,11 @@ export class CanvasRenderer {
 
     this.ctx.strokeRect(element.x, element.y, element.width, element.height);
 
+    // Indicador visual de loja vinculada (pequeno badge no canto)
+    if (element.layer === "locations" && element.storeId) {
+      this.drawStoreLinkedBadge(element);
+    }
+
     // Texto/Label
     this.drawElementText(element);
 
@@ -193,21 +210,137 @@ export class CanvasRenderer {
   }
 
   /**
+   * Desenha um badge indicando que o local está vinculado a uma loja
+   */
+  private drawStoreLinkedBadge(element: MapElement): void {
+    const badgeSize = 8;
+    const badgeX = element.x + element.width - badgeSize - 2;
+    const badgeY = element.y + 2;
+
+    // Círculo verde indicando vínculo
+    this.ctx.fillStyle = "#10B981";
+    this.ctx.beginPath();
+    this.ctx.arc(
+      badgeX + badgeSize / 2,
+      badgeY + badgeSize / 2,
+      badgeSize / 2,
+      0,
+      Math.PI * 2
+    );
+    this.ctx.fill();
+
+    // Borda branca para destaque
+    this.ctx.strokeStyle = "#FFFFFF";
+    this.ctx.lineWidth = 1;
+    this.ctx.stroke();
+  }
+
+  /**
+   * Carrega uma imagem no cache
+   */
+  private loadImageToCache(url: string): void {
+    if (this.imageCache.has(url)) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      this.imageCache.set(url, img);
+    };
+
+    img.onerror = () => {
+      // Remover do cache se falhar
+      this.imageCache.delete(url);
+    };
+
+    img.src = url;
+  }
+
+  /**
    * Desenha o texto do elemento
    */
   private drawElementText(element: MapElement): void {
+    const centerX = element.x + element.width / 2;
+    const centerY = element.y + element.height / 2;
+
+    // Se o elemento tiver uma loja vinculada com imagem, desenhar a imagem de fundo de forma discreta
+    if (element.layer === "locations" && element.storeLogo) {
+      // Tentar carregar a imagem no cache
+      this.loadImageToCache(element.storeLogo);
+      // Desenhar se já estiver carregada
+      const cachedImage = this.imageCache.get(element.storeLogo);
+      if (cachedImage) {
+        this.drawStoreLogoBackground(element, cachedImage);
+      }
+    }
+
+    // Se o elemento tiver uma loja vinculada, mostrar ícone da categoria
+    let textYOffset = 0;
+    if (element.layer === "locations" && element.storeCategory) {
+      const emoji = getCategoryEmoji(element.storeCategory);
+      const emojiSize = Math.min(20, element.width / 4);
+
+      this.ctx.font = `${emojiSize}px Arial`;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+
+      // Desenhar emoji no topo do elemento
+      const emojiY = element.y + emojiSize;
+      this.ctx.fillText(emoji, centerX, emojiY);
+
+      // Ajustar offset do texto para ficar abaixo do emoji
+      textYOffset = emojiSize / 2;
+    }
+
+    // Desenhar o nome
     this.ctx.fillStyle = ColorUtils.getContrastColor(element.color);
     this.ctx.font = `${Math.min(12, element.width / 8)}px Arial`;
     this.ctx.textAlign = "center";
     this.ctx.textBaseline = "middle";
 
-    const centerX = element.x + element.width / 2;
-    const centerY = element.y + element.height / 2;
-
-    // Nome ou tipo
     const text = element.name || element.type || "Sem nome";
     const maxWidth = element.width - 4;
-    this.ctx.fillText(text, centerX, centerY, maxWidth);
+    this.ctx.fillText(text, centerX, centerY + textYOffset, maxWidth);
+  }
+
+  /**
+   * Desenha a logo da loja como fundo discreto
+   */
+  private drawStoreLogoBackground(
+    element: MapElement,
+    img: HTMLImageElement
+  ): void {
+    this.ctx.save();
+
+    // Desenhar com opacidade baixa para ser discreto
+    this.ctx.globalAlpha = 0.15;
+
+    // Calcular dimensões para manter proporção
+    const padding = 10;
+    const maxWidth = element.width - padding * 2;
+    const maxHeight = element.height - padding * 2;
+
+    let drawWidth = maxWidth;
+    let drawHeight = maxHeight;
+
+    const aspectRatio = img.width / img.height;
+
+    if (maxWidth / maxHeight > aspectRatio) {
+      drawWidth = maxHeight * aspectRatio;
+    } else {
+      drawHeight = maxWidth / aspectRatio;
+    }
+
+    const drawX = element.x + (element.width - drawWidth) / 2;
+    const drawY = element.y + (element.height - drawHeight) / 2;
+
+    try {
+      this.ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+    } catch (err) {
+      // Ignorar erros de desenho
+    }
+
+    this.ctx.restore();
   }
 
   /**
@@ -387,56 +520,68 @@ export class CanvasRenderer {
 export function useCanvasRenderer(
   canvasRef: React.RefObject<HTMLCanvasElement>
 ) {
-  let renderer: CanvasRenderer | null = null;
+  const rendererRef = React.useRef<CanvasRenderer | null>(null);
 
-  const getRenderer = (): CanvasRenderer | null => {
+  const getRenderer = React.useCallback((): CanvasRenderer | null => {
     if (!canvasRef.current) return null;
 
-    if (!renderer) {
-      renderer = new CanvasRenderer(canvasRef.current);
+    if (!rendererRef.current) {
+      rendererRef.current = new CanvasRenderer(canvasRef.current);
     }
 
-    return renderer;
-  };
+    return rendererRef.current;
+  }, [canvasRef]);
 
-  const render = (
-    layers: MapLayers,
-    selectedElement: MapElement | null = null,
-    debugMode: boolean = false,
-    debugInfo?: DebugInfo
-  ): void => {
-    const canvasRenderer = getRenderer();
-    if (canvasRenderer) {
-      canvasRenderer.render(layers, selectedElement, debugMode, debugInfo);
-    }
-  };
+  const render = React.useCallback(
+    (
+      layers: MapLayers,
+      selectedElement: MapElement | null = null,
+      debugMode: boolean = false,
+      debugInfo?: DebugInfo
+    ): void => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        canvasRenderer.render(layers, selectedElement, debugMode, debugInfo);
+      }
+    },
+    [getRenderer]
+  );
 
-  const drawPreviewElement = (
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-    layer: LayerType
-  ): void => {
-    const canvasRenderer = getRenderer();
-    if (canvasRenderer) {
-      canvasRenderer.drawPreviewElement(startX, startY, endX, endY, layer);
-    }
-  };
+  const drawPreviewElement = React.useCallback(
+    (
+      startX: number,
+      startY: number,
+      endX: number,
+      endY: number,
+      layer: LayerType
+    ): void => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        canvasRenderer.drawPreviewElement(startX, startY, endX, endY, layer);
+      }
+    },
+    [getRenderer]
+  );
 
-  const drawResizeHandles = (element: MapElement): void => {
-    const canvasRenderer = getRenderer();
-    if (canvasRenderer) {
-      canvasRenderer.drawResizeHandles(element);
-    }
-  };
+  const drawResizeHandles = React.useCallback(
+    (element: MapElement): void => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        canvasRenderer.drawResizeHandles(element);
+      }
+    },
+    [getRenderer]
+  );
 
-  const updateCursor = (tool: string, isDrawing: boolean = false): void => {
-    const canvasRenderer = getRenderer();
-    if (canvasRenderer) {
-      canvasRenderer.updateCursor(tool, isDrawing);
-    }
-  };
+  const updateCursor = React.useCallback(
+    (tool: string, isDrawing: boolean = false): void => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        canvasRenderer.updateCursor(tool, isDrawing);
+      }
+    },
+    [getRenderer]
+  );
 
   return {
     render,

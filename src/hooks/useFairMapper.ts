@@ -220,16 +220,6 @@ export function useFairMapper(): UseFairMapperReturn {
    * Renderiza o canvas
    */
   const renderCanvas = useCallback((): void => {
-    console.log("[FairMapper] renderCanvas called with layers:", {
-      background: layers.background.length,
-      submaps: layers.submaps.length,
-      locations: layers.locations.length,
-      total:
-        layers.background.length +
-        layers.submaps.length +
-        layers.locations.length,
-    });
-
     // Render the canvas
     render(layers, selectedElement, debugMode, debugInfo);
 
@@ -698,6 +688,18 @@ export function useFairMapper(): UseFairMapperReturn {
   // Re-renderizar quando estado mudar
   useEffect(() => {
     renderCanvas();
+  }, [renderCanvas, layers]);
+
+  // Re-renderizar quando o canvas for redimensionado
+  useEffect(() => {
+    const handleCanvasResize = () => {
+      renderCanvas();
+    };
+
+    window.addEventListener("canvas-resized", handleCanvasResize);
+    return () => {
+      window.removeEventListener("canvas-resized", handleCanvasResize);
+    };
   }, [renderCanvas]);
 
   return {

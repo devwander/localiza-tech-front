@@ -31,22 +31,33 @@ export function Canvas({ canvasRef }: CanvasProps) {
       // apply transform so drawing commands can use CSS pixels
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // clear after resize
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Note: clearing is removed here - let the renderer handle it
+      // ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
     // Use ResizeObserver when available to detect container changes
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(() => resizeCanvas());
+      ro = new ResizeObserver(() => {
+        resizeCanvas();
+        // Dispatch custom event to notify that canvas was resized
+        window.dispatchEvent(new CustomEvent("canvas-resized"));
+      });
       ro.observe(canvas.parentElement ?? canvas);
     } else {
       // fallback: window resize
-      window.addEventListener("resize", resizeCanvas);
+      window.addEventListener("resize", () => {
+        resizeCanvas();
+        window.dispatchEvent(new CustomEvent("canvas-resized"));
+      });
     }
 
     // initial size
     resizeCanvas();
+    // Force a re-render after initial resize
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("canvas-resized"));
+    }, 100);
 
     return () => {
       if (ro) ro.disconnect();
@@ -55,7 +66,15 @@ export function Canvas({ canvasRef }: CanvasProps) {
   }, [canvasRef]);
 
   return (
-    <div style={{ flexGrow: 1, overflow: "hidden", width: "100%", height: "100%", position: "relative" }}>
+    <div
+      style={{
+        flexGrow: 1,
+        overflow: "hidden",
+        width: "100%",
+        height: "100%",
+        position: "relative",
+      }}
+    >
       <canvas
         ref={canvasRef}
         width={800}

@@ -74,6 +74,10 @@ export interface BaseMapElement extends Bounds {
   name: string;
   color: string;
   borderColor: string;
+  storeId?: string; // ID da loja vinculada a este espaço
+  storeName?: string; // Nome da loja vinculada
+  storeCategory?: string; // Categoria da loja vinculada
+  storeLogo?: string; // Logo/imagem da loja vinculada
 }
 
 // Elementos específicos por camada
