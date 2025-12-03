@@ -1,4 +1,11 @@
-import { Search, Map as MapIcon, ZoomIn, ZoomOut, Maximize2, Grid3x3 } from "lucide-react";
+import {
+  Grid3x3,
+  Map as MapIcon,
+  Maximize2,
+  Search,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Canvas } from "../../../components/fair-mapper/Canvas";
@@ -8,9 +15,13 @@ import type { Store } from "../../../models";
 import { usePublicMap, useStoresByMapPublicQuery } from "../../../queries";
 import type { MapElement, MapLayers } from "../../../types/fair-mapper";
 import { useCanvasRenderer } from "../../../utils/canvas-renderer";
+import {
+  getCategoryColor,
+  getCategoryIcon,
+  getCategoryLabel,
+} from "../../../utils/category-icon-components";
 import { apiFormatToLayers } from "../../../utils/map-converter";
 import { enrichLayersWithStoreData } from "../../../utils/store-enrichment";
-import { getCategoryIcon, getCategoryColor, getCategoryLabel } from "../../../utils/category-icon-components";
 
 // Helper para calcular a transformação inversa do canvas
 function calculateInverseTransform(
@@ -113,7 +124,20 @@ export function PublicMapView() {
   const { render } = useCanvasRenderer(canvasRef);
 
   // Categorias disponíveis
-  const categories = ["all", "food", "clothing", "electronics", "jewelry", "books", "sports", "home", "beauty", "toys", "services", "other"];
+  const categories = [
+    "all",
+    "food",
+    "clothing",
+    "electronics",
+    "jewelry",
+    "books",
+    "sports",
+    "home",
+    "beauty",
+    "toys",
+    "services",
+    "other",
+  ];
 
   // Filtrar stores por categoria e busca
   const filteredStores = storesData.filter((store) => {
@@ -126,7 +150,7 @@ export function PublicMapView() {
   });
 
   // IDs das stores filtradas para destacar no canvas
-  const filteredStoreIds = new Set(filteredStores.map(s => s._id));
+  const filteredStoreIds = new Set(filteredStores.map((s) => s._id));
   const hasActiveFilters = selectedCategory !== "all" || searchQuery !== "";
 
   // Contar stores por categoria
@@ -137,7 +161,15 @@ export function PublicMapView() {
 
   // Render canvas callback com filtros e zoom
   const renderCanvas = useCallback((): void => {
-    render(layers, null, false, undefined, filteredStoreIds, hasActiveFilters, zoomLevel);
+    render(
+      layers,
+      null,
+      false,
+      undefined,
+      filteredStoreIds,
+      hasActiveFilters,
+      zoomLevel
+    );
   }, [layers, render, filteredStoreIds, hasActiveFilters, zoomLevel]);
 
   // Load map data and convert to layers
@@ -149,10 +181,7 @@ export function PublicMapView() {
     // Enriquecer layers com dados das stores vinculadas
     let enrichedLayers = convertedLayers;
     if (storesData && storesData.length > 0) {
-      enrichedLayers = enrichLayersWithStoreData(
-        convertedLayers,
-        storesData
-      );
+      enrichedLayers = enrichLayersWithStoreData(convertedLayers, storesData);
     }
 
     setLayers(enrichedLayers);
@@ -183,11 +212,11 @@ export function PublicMapView() {
 
   // Funções de zoom
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.2, 3));
+    setZoomLevel((prev) => Math.min(prev + 0.2, 3));
   };
 
   const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
+    setZoomLevel((prev) => Math.max(prev - 0.2, 0.5));
   };
 
   const handleResetZoom = () => {
@@ -202,11 +231,14 @@ export function PublicMapView() {
         setIsFullscreen(false);
       });
     } else {
-      containerRef.current.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(err => {
-        console.error('Erro ao entrar em fullscreen:', err);
-      });
+      containerRef.current
+        .requestFullscreen()
+        .then(() => {
+          setIsFullscreen(true);
+        })
+        .catch((err) => {
+          console.error("Erro ao entrar em fullscreen:", err);
+        });
     }
   };
 
@@ -216,8 +248,9 @@ export function PublicMapView() {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   // Handler para clique no canvas
@@ -306,11 +339,16 @@ export function PublicMapView() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-2 py-4 overflow-x-auto">
             {categories.map((category) => {
-              const Icon = category === "all" ? Grid3x3 : getCategoryIcon(category);
-              const label = category === "all" ? "Todos" : getCategoryLabel(category);
-              const count = category === "all" ? storesData.length : categoryCounts[category] || 0;
+              const Icon =
+                category === "all" ? Grid3x3 : getCategoryIcon(category);
+              const label =
+                category === "all" ? "Todos" : getCategoryLabel(category);
+              const count =
+                category === "all"
+                  ? storesData.length
+                  : categoryCounts[category] || 0;
               const isActive = selectedCategory === category;
-              
+
               return (
                 <button
                   key={category}
@@ -341,11 +379,11 @@ export function PublicMapView() {
 
       {/* Main Content - Canvas Map */}
       <main ref={containerRef} className="flex-1 relative overflow-hidden">
-        <div 
-          className="h-full cursor-pointer" 
+        <div
+          className="h-full cursor-pointer"
           onClick={handleCanvasClick}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
+            if (e.key === "Enter" || e.key === " ") {
               handleCanvasClick(e as any);
             }
           }}
@@ -389,10 +427,12 @@ export function PublicMapView() {
 
         {/* Legend - Bottom Left */}
         <div className="absolute bottom-20 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-gray-200 max-w-xs">
-          <h4 className="font-semibold text-sm text-gray-900 mb-2">Categorias</h4>
+          <h4 className="font-semibold text-sm text-gray-900 mb-2">
+            Categorias
+          </h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {categories
-              .filter(cat => cat !== "all")
+              .filter((cat) => cat !== "all")
               .map((category) => {
                 const count = categoryCounts[category] || 0;
                 if (count === 0) return null;
@@ -401,8 +441,8 @@ export function PublicMapView() {
                 const color = getCategoryColor(category);
                 return (
                   <div key={category} className="flex items-center gap-2">
-                    <div 
-                      className="w-6 h-6 rounded flex items-center justify-center" 
+                    <div
+                      className="w-6 h-6 rounded flex items-center justify-center"
                       style={{ backgroundColor: color + "20", color: color }}
                     >
                       <Icon size={14} />
@@ -419,7 +459,8 @@ export function PublicMapView() {
         {/* Status Bar */}
         <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t px-4 py-2">
           <p className="text-sm text-gray-600">
-            Modo: Visualização | Lojas: {filteredStores.length}/{storesData.length} | Zoom: {Math.round(zoomLevel * 100)}%
+            Modo: Visualização | Lojas: {filteredStores.length}/
+            {storesData.length} | Zoom: {Math.round(zoomLevel * 100)}%
           </p>
         </div>
       </main>

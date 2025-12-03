@@ -415,8 +415,8 @@ export class CanvasRenderer {
         services: "#22D3EE",
         other: "#6B7280",
       };
-      const badgeColor = element.storeCategory 
-        ? (categoryColors[element.storeCategory] || "#6B7280")
+      const badgeColor = element.storeCategory
+        ? categoryColors[element.storeCategory] || "#6B7280"
         : "#6B7280"; // Cinza padrão se não tiver categoria
 
       // Sombra do badge
@@ -457,11 +457,11 @@ export class CanvasRenderer {
         this.ctx.lineWidth = 2;
         this.ctx.lineCap = "round";
         this.ctx.lineJoin = "round";
-        
+
         const cx = badgeX + badgeSize / 2;
         const cy = badgeY + badgeSize / 2;
         const r = iconSize / 3;
-        
+
         // Desenhar pin de localização simples
         this.ctx.beginPath();
         this.ctx.arc(cx, cy - r * 0.5, r, 0, Math.PI * 2);
