@@ -9,7 +9,7 @@ export const useCreateStoreMutation = () => {
     mutationFn: (data: CreateStoreRequest) => {
       return Service.store.create(data);
     },
-    onSuccess: (createdStore, variables) => {
+    onSuccess: (_createdStore, variables) => {
       // Invalidar stores
       queryClient.invalidateQueries({ queryKey: ["stores"] });
       

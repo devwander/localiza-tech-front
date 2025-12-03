@@ -395,8 +395,6 @@ export class CanvasRenderer {
     }
 
     // Badge colorido no canto superior direito
-    let textYOffset = 0;
-
     // Para lojas - badge com ícone de categoria
     if (element.layer === "locations" && element.storeId) {
       const badgeSize = Math.min(32, element.width / 4);

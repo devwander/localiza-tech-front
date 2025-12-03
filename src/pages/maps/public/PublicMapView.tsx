@@ -107,8 +107,8 @@ export function PublicMapView() {
     locations: [],
   });
 
-  const { data: mapData, isLoading, isError, refetch: refetchMap } = usePublicMap(id);
-  const { data: storesData = [], refetch: refetchStores } = useStoresByMapPublicQuery(id || "");
+  const { data: mapData, isLoading, isError } = usePublicMap(id);
+  const { data: storesData = [] } = useStoresByMapPublicQuery(id || "");
 
   const { render } = useCanvasRenderer(canvasRef);
 
