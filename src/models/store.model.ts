@@ -24,7 +24,6 @@ export interface StoreLocation {
 export interface Store {
   _id: string;
   name: string;
-  floor: string;
   category: StoreCategory;
   openingHours: string;
   logo: string;
@@ -38,11 +37,11 @@ export interface Store {
   userId: string;
   createdAt?: string;
   updatedAt?: string;
+  floor?: string; // Deprecated - manter para compatibilidade
 }
 
 export interface CreateStoreRequest {
   name: string;
-  floor: string;
   category: StoreCategory;
   openingHours: string;
   logo: string;

@@ -12,7 +12,6 @@ import {
   Baby,
   Calendar,
   Package,
-  Building2,
   Clock,
   Pencil,
   Trash2,
@@ -95,9 +94,6 @@ export const StoreList = ({
               Categoria
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Localização
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Horário
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -123,12 +119,6 @@ export const StoreList = ({
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(store.category)}`}>
                   {StoreCategoryLabels[store.category]}
                 </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Building2 size={16} />
-                  <span>{store.floor}</span>
-                </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center gap-2 text-gray-600">
