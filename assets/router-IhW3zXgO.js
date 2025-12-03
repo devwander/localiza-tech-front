@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/index-BBBxqy0e.js","assets/index-fgLeOBi-.js","assets/index-B8nORJW8.css","assets/Toolbar-CQ0rCbrf.js"])))=>i.map(i=>d[i]);
+import{j as t,R as a,a as r,r as o,_ as s}from"./index-fgLeOBi-.js";const p=o.lazy(()=>s(()=>import("./index-BBBxqy0e.js"),__vite__mapDeps([0,1,2,3])).then(e=>({default:e.Mapping})));function i(){return t.jsx(a,{children:t.jsx(r,{path:"/*",element:t.jsx(p,{})})})}export{i as MappingRouter};
