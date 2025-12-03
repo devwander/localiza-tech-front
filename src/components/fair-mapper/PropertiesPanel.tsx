@@ -209,7 +209,7 @@ export function PropertiesPanel({
                 <option value="">Sem vínculo</option>
                 {storesData?.data?.map((store) => (
                   <option key={store._id} value={store._id}>
-                    {store.name} - {store.floor}
+                    {store.name}
                   </option>
                 ))}
               </select>

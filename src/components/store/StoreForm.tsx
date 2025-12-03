@@ -15,7 +15,6 @@ interface StoreFormProps {
 
 export interface StoreFormData {
   name: string;
-  floor: string;
   category: StoreCategory;
   openingHours: string;
   logo: string;
@@ -33,7 +32,6 @@ export const StoreForm = ({
 }: StoreFormProps) => {
   const [formData, setFormData] = useState<StoreFormData>({
     name: store?.name || "",
-    floor: store?.floor || "",
     category: store?.category || StoreCategory.OTHER,
     openingHours: store?.openingHours || "",
     logo: store?.logo || "",
@@ -81,42 +79,24 @@ export const StoreForm = ({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="store-floor" className="block text-sm font-medium text-gray-700 mb-1">
-            Andar *
-          </label>
-          <input
-            type="text"
-            id="store-floor"
-            name="floor"
-            value={formData.floor}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ex: Térreo, 1º Andar"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="store-category" className="block text-sm font-medium text-gray-700 mb-1">
-            Categoria *
-          </label>
-          <select
-            id="store-category"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {Object.entries(StoreCategoryLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div>
+        <label htmlFor="store-category" className="block text-sm font-medium text-gray-700 mb-1">
+          Categoria *
+        </label>
+        <select
+          id="store-category"
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {Object.entries(StoreCategoryLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

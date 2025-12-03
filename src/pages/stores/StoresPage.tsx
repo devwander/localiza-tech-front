@@ -117,7 +117,6 @@ export const StoresPage = () => {
     // Validar campos obrigatórios
     if (
       !data.name ||
-      !data.floor ||
       !data.category ||
       !data.openingHours ||
       !data.description
