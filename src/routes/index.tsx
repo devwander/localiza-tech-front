@@ -59,14 +59,17 @@ export function Router(): ReactElement {
 
         {!logged && (
           <Route element={<Public />}>
-            <Route path="/" element={<Navigate to="/sign-in" replace />} />
-            <Route path="/sign-in" element={<Signin />} />
-            <Route path="/sign-up" element={<Signup />} />
+            <Route index element={<Navigate to={"/sign-in"} />} />
+            <Route path="sign-in/" element={<Signin />} />
+            <Route path="sign-up/" element={<Signup />} />
           </Route>
         )}
 
         {logged && (
-          <Route path="/" element={<Navigate to="/dashboard/maps" replace />} />
+          <Route
+            path="/"
+            element={<Navigate to={"/dashboard/maps"} replace />}
+          />
         )}
 
         {logged && (
@@ -77,11 +80,6 @@ export function Router(): ReactElement {
               <Route path="/stores/:mapId" element={<StoresPage />} />
             </Route>
           </Route>
-        )}
-
-        {/* Catch all - redirect to sign-in if not logged */}
-        {!logged && (
-          <Route path="*" element={<Navigate to="/sign-in" replace />} />
         )}
       </Routes>
     </Suspense>

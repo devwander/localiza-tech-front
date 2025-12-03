@@ -8,7 +8,7 @@ import { Router } from "./routes";
 function App() {
   return (
     <QueryClientProvider client={tanstack}>
-      <BrowserRouter basename="/localiza-tech-front">
+      <BrowserRouter>
         <Router />
       </BrowserRouter>
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
