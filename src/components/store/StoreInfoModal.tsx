@@ -1,13 +1,10 @@
-import {
-  Clock,
-  Mail,
-  Globe,
-  MapPin,
-  Phone,
-  X,
-} from "lucide-react";
+import { Clock, Globe, Mail, Phone, X } from "lucide-react";
 import type { Store } from "../../models";
-import { getCategoryIcon, getCategoryColor, getCategoryLabel } from "../../utils/category-icon-components";
+import {
+  getCategoryColor,
+  getCategoryIcon,
+  getCategoryLabel,
+} from "../../utils/category-icon-components";
 
 interface StoreInfoModalProps {
   store: Store | null;
@@ -22,16 +19,16 @@ export function StoreInfoModal({ store, onClose }: StoreInfoModalProps) {
   const categoryLabel = getCategoryLabel(store.category);
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header com cor da categoria */}
-        <div 
+        <div
           className="relative px-6 py-8 text-white"
           style={{ backgroundColor: categoryColor }}
         >
@@ -85,7 +82,7 @@ export function StoreInfoModal({ store, onClose }: StoreInfoModalProps) {
           {/* Opening Hours */}
           {store.openingHours && (
             <div className="flex items-start gap-3 bg-gray-50 rounded-lg p-4">
-              <div 
+              <div
                 className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: categoryColor }}
               >
@@ -103,14 +100,16 @@ export function StoreInfoModal({ store, onClose }: StoreInfoModalProps) {
           {/* Contact Information */}
           {(store.phone || store.email || store.website) && (
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Contato</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                Contato
+              </h3>
 
               {store.phone && (
                 <a
                   href={`tel:${store.phone}`}
                   className="flex items-center gap-3 hover:bg-white rounded-lg p-2 transition-colors group"
                 >
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: categoryColor }}
                   >
@@ -127,7 +126,7 @@ export function StoreInfoModal({ store, onClose }: StoreInfoModalProps) {
                   href={`mailto:${store.email}`}
                   className="flex items-center gap-3 hover:bg-white rounded-lg p-2 transition-colors group"
                 >
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: categoryColor }}
                   >
@@ -146,7 +145,7 @@ export function StoreInfoModal({ store, onClose }: StoreInfoModalProps) {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 hover:bg-white rounded-lg p-2 transition-colors group"
                 >
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: categoryColor }}
                   >
