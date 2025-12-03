@@ -210,6 +210,8 @@ export class CanvasRenderer {
 
     const radius = 12; // Bordas mais arredondadas
     const isStore = element.layer === "locations" && element.storeId;
+    const isSubmap = element.layer === "submaps";
+    const isBackground = element.layer === "background";
     
     // Determinar se este elemento está filtrado
     const isFiltered = hasActiveFilters && isStore && filteredStoreIds 
@@ -220,21 +222,21 @@ export class CanvasRenderer {
     const opacity = !hasActiveFilters || isFiltered ? 1 : 0.25;
     this.ctx.globalAlpha = opacity;
 
-    // Sombra mais pronunciada para lojas filtradas
+    // Sombra para todos os elementos
     if (isStore && isFiltered) {
       this.ctx.shadowColor = "rgba(0, 0, 0, 0.08)";
       this.ctx.shadowBlur = 16;
       this.ctx.shadowOffsetX = 0;
       this.ctx.shadowOffsetY = 2;
-    } else if (element.layer === "locations") {
-      this.ctx.shadowColor = "rgba(0, 0, 0, 0.04)";
-      this.ctx.shadowBlur = 8;
+    } else if (isStore || isSubmap || isBackground) {
+      this.ctx.shadowColor = "rgba(0, 0, 0, 0.06)";
+      this.ctx.shadowBlur = 12;
       this.ctx.shadowOffsetX = 0;
-      this.ctx.shadowOffsetY = 1;
+      this.ctx.shadowOffsetY = 2;
     }
 
-    // Corpo do elemento - branco para lojas, cor original para outros
-    this.ctx.fillStyle = isStore ? "#FFFFFF" : element.color;
+    // Corpo do elemento - branco para todos
+    this.ctx.fillStyle = "#FFFFFF";
     this.drawRoundedRect(element.x, element.y, element.width, element.height, radius);
     this.ctx.fill();
 
@@ -245,15 +247,10 @@ export class CanvasRenderer {
     this.ctx.shadowOffsetY = 0;
 
     // Borda sutil
-    if (isStore) {
-      this.ctx.strokeStyle = "#E5E7EB";
-      this.ctx.lineWidth = 1;
-    } else {
-      this.ctx.strokeStyle = element.borderColor;
-      this.ctx.lineWidth = 1;
-    }
+    this.ctx.strokeStyle = "#E5E7EB";
+    this.ctx.lineWidth = 1;
 
-    if (element.layer === "submaps") {
+    if (isSubmap) {
       this.ctx.setLineDash([5, 5]);
     } else {
       this.ctx.setLineDash([]);
@@ -358,8 +355,10 @@ export class CanvasRenderer {
       }
     }
 
-    // Badge colorido com ícone no canto superior direito (como na imagem)
+    // Badge colorido no canto superior direito
     let textYOffset = 0;
+    
+    // Para lojas - badge com ícone de categoria
     if (element.layer === "locations" && element.storeCategory && element.storeId) {
       const badgeSize = Math.min(32, element.width / 4);
       const badgeX = element.x + element.width - badgeSize - 8;
@@ -406,16 +405,103 @@ export class CanvasRenderer {
         "#FFFFFF"
       );
     }
+    
+    // Para submapas - badge com cor do layer
+    if (element.layer === "submaps") {
+      const badgeSize = Math.min(32, element.width / 4);
+      const badgeX = element.x + element.width - badgeSize - 8;
+      const badgeY = element.y + 8;
 
-    // Desenhar o nome e categoria
+      // Sombra do badge
+      this.ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
+      this.ctx.shadowBlur = 4;
+      this.ctx.shadowOffsetX = 0;
+      this.ctx.shadowOffsetY = 2;
+
+      // Badge circular com cor do submapa
+      this.ctx.fillStyle = LAYER_CONFIG.submaps.color;
+      this.ctx.beginPath();
+      this.ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Remover sombra
+      this.ctx.shadowColor = "transparent";
+      this.ctx.shadowBlur = 0;
+
+      // Ícone de grid/mapa no badge
+      const iconSize = badgeSize * 0.5;
+      this.ctx.strokeStyle = "#FFFFFF";
+      this.ctx.lineWidth = 2;
+      this.ctx.lineCap = "round";
+      this.ctx.lineJoin = "round";
+      
+      const cx = badgeX + badgeSize / 2;
+      const cy = badgeY + badgeSize / 2;
+      const r = iconSize / 2;
+      
+      // Desenhar ícone de grid 3x3
+      this.ctx.beginPath();
+      this.ctx.moveTo(cx - r * 0.6, cy - r);
+      this.ctx.lineTo(cx - r * 0.6, cy + r);
+      this.ctx.moveTo(cx + r * 0.6, cy - r);
+      this.ctx.lineTo(cx + r * 0.6, cy + r);
+      this.ctx.moveTo(cx - r, cy - r * 0.6);
+      this.ctx.lineTo(cx + r, cy - r * 0.6);
+      this.ctx.moveTo(cx - r, cy + r * 0.6);
+      this.ctx.lineTo(cx + r, cy + r * 0.6);
+      this.ctx.stroke();
+    }
+    
+    // Para background - badge com cor do layer
+    if (element.layer === "background") {
+      const badgeSize = Math.min(32, element.width / 4);
+      const badgeX = element.x + element.width - badgeSize - 8;
+      const badgeY = element.y + 8;
+
+      // Sombra do badge
+      this.ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
+      this.ctx.shadowBlur = 4;
+      this.ctx.shadowOffsetX = 0;
+      this.ctx.shadowOffsetY = 2;
+
+      // Badge circular com cor do background
+      this.ctx.fillStyle = LAYER_CONFIG.background.color;
+      this.ctx.beginPath();
+      this.ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Remover sombra
+      this.ctx.shadowColor = "transparent";
+      this.ctx.shadowBlur = 0;
+
+      // Ícone de camadas no badge
+      const iconSize = badgeSize * 0.5;
+      this.ctx.strokeStyle = "#FFFFFF";
+      this.ctx.lineWidth = 2;
+      this.ctx.lineCap = "round";
+      this.ctx.lineJoin = "round";
+      
+      const cx = badgeX + badgeSize / 2;
+      const cy = badgeY + badgeSize / 2;
+      const r = iconSize / 2;
+      
+      // Desenhar ícone de camadas (3 retângulos empilhados)
+      this.ctx.fillStyle = "#FFFFFF";
+      this.ctx.fillRect(cx - r * 0.8, cy - r * 0.8, r * 1.6, r * 0.4);
+      this.ctx.fillRect(cx - r * 0.8, cy - r * 0.2, r * 1.6, r * 0.4);
+      this.ctx.fillRect(cx - r * 0.8, cy + r * 0.4, r * 1.6, r * 0.4);
+    }
+
+    // Desenhar o nome e subtítulo
     const isStore = element.layer === "locations" && element.storeId;
-    this.ctx.fillStyle = isStore ? "#1F2937" : ColorUtils.getContrastColor(element.color);
+    const isSubmap = element.layer === "submaps";
+    const isBackground = element.layer === "background";
     
     const text = element.name || element.type || "Sem nome";
     const maxWidth = element.width - 24;
     
     if (isStore && element.storeCategory) {
-      // Layout como na imagem: título + subtítulo
+      // Lojas: título + subtítulo (categoria)
       const titleFontSize = Math.min(13, Math.max(11, element.width / 12));
       const subtitleFontSize = Math.min(10, Math.max(8, element.width / 16));
       
@@ -423,6 +509,7 @@ export class CanvasRenderer {
       this.ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
+      this.ctx.fillStyle = "#1F2937";
       this.ctx.fillText(text, centerX, centerY - 6, maxWidth);
       
       // Subtítulo (categoria)
@@ -444,12 +531,45 @@ export class CanvasRenderer {
       this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.fillStyle = "#9CA3AF";
       this.ctx.fillText(categoryText, centerX, centerY + 8, maxWidth);
+    } else if (isSubmap) {
+      // Submapas: título + subtítulo "SUBMAPA"
+      const titleFontSize = Math.min(13, Math.max(11, element.width / 12));
+      const subtitleFontSize = Math.min(10, Math.max(8, element.width / 16));
+      
+      // Título
+      this.ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillStyle = "#1F2937";
+      this.ctx.fillText(text, centerX, centerY - 6, maxWidth);
+      
+      // Subtítulo
+      this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+      this.ctx.fillStyle = "#9CA3AF";
+      this.ctx.fillText("SUBMAPA", centerX, centerY + 8, maxWidth);
+    } else if (isBackground) {
+      // Background: título + subtítulo "FUNDO"
+      const titleFontSize = Math.min(13, Math.max(11, element.width / 12));
+      const subtitleFontSize = Math.min(10, Math.max(8, element.width / 16));
+      
+      // Título
+      this.ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillStyle = "#1F2937";
+      this.ctx.fillText(text, centerX, centerY - 6, maxWidth);
+      
+      // Subtítulo
+      this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+      this.ctx.fillStyle = "#9CA3AF";
+      this.ctx.fillText("FUNDO", centerX, centerY + 8, maxWidth);
     } else {
-      // Elementos sem loja vinculada - texto simples
+      // Outros elementos - texto simples
       const fontSize = Math.min(12, Math.max(10, element.width / 12));
       this.ctx.font = `500 ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
+      this.ctx.fillStyle = "#1F2937";
       this.ctx.fillText(text, centerX, centerY, maxWidth);
     }
   }
