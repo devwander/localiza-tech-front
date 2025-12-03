@@ -62,6 +62,7 @@ export function useFairMapper(): UseFairMapperReturn {
     drawResizeHandles,
     updateCursor,
     getRenderer,
+    screenToWorld,
   } = useCanvasRenderer(canvasRef as React.RefObject<HTMLCanvasElement>);
 
   // Background image (in-memory). We keep meta here but do not persist the binary in fairMapperData.
@@ -79,21 +80,24 @@ export function useFairMapper(): UseFairMapperReturn {
       }
 
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const screenX = e.clientX - rect.left;
+      const screenY = e.clientY - rect.top;
+
+      // Aplicar transformação inversa para obter coordenadas do mundo
+      const worldCoords = screenToWorld(screenX, screenY);
 
       // Atualizar debug info
       if (debugMode) {
         setDebugInfo((prev) => ({
           ...prev,
           mousePos: { x: e.clientX, y: e.clientY },
-          canvasPos: { x, y },
+          canvasPos: worldCoords,
         }));
       }
 
-      return { x, y };
+      return worldCoords;
     },
-    [debugMode]
+    [debugMode, screenToWorld]
   );
 
   /**

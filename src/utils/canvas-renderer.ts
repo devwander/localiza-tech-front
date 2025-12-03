@@ -52,6 +52,13 @@ export class CanvasRenderer {
     height: number;
   } | null = null;
   private imageCache: Map<string, HTMLImageElement> = new Map();
+  
+  // Armazenar a transformação atual para conversão de coordenadas
+  private currentTransform = {
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+  };
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -165,6 +172,13 @@ export class CanvasRenderer {
     const scaledHeight = contentHeight * scale;
     const offsetX = (canvasWidth - scaledWidth) / 2 - minX * scale;
     const offsetY = (canvasHeight - scaledHeight) / 2 - minY * scale;
+
+    // Armazenar transformação para uso posterior
+    this.currentTransform = {
+      offsetX,
+      offsetY,
+      scale,
+    };
 
     // Apply transformation
     this.ctx.save();
@@ -808,6 +822,27 @@ export class CanvasRenderer {
 
     this.canvas.style.cursor = cursor;
   }
+
+  /**
+   * Transforma coordenadas de tela para coordenadas do mundo do canvas
+   * Aplica a transformação inversa usada na renderização
+   */
+  screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
+    const { offsetX, offsetY, scale } = this.currentTransform;
+    
+    // Aplicar transformação inversa
+    const worldX = (screenX - offsetX) / scale;
+    const worldY = (screenY - offsetY) / scale;
+    
+    return { x: worldX, y: worldY };
+  }
+
+  /**
+   * Obtém a transformação atual
+   */
+  getCurrentTransform() {
+    return { ...this.currentTransform };
+  }
 }
 
 /**
@@ -882,11 +917,23 @@ export function useCanvasRenderer(
     [getRenderer]
   );
 
+  const screenToWorld = React.useCallback(
+    (screenX: number, screenY: number): { x: number; y: number } => {
+      const canvasRenderer = getRenderer();
+      if (canvasRenderer) {
+        return canvasRenderer.screenToWorld(screenX, screenY);
+      }
+      return { x: screenX, y: screenY };
+    },
+    [getRenderer]
+  );
+
   return {
     render,
     drawPreviewElement,
     drawResizeHandles,
     updateCursor,
     getRenderer,
+    screenToWorld,
   };
 }
