@@ -38,7 +38,8 @@ export const storeService = {
     return response.data;
   },
 
-  async delete(id: string): Promise<void> {
-    await api.delete(`/stores/${id}`);
+  async delete(id: string): Promise<Store> {
+    const response = await api.delete(`/stores/${id}`);
+    return response.data;
   },
 };

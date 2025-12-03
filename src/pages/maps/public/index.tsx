@@ -42,14 +42,7 @@ export function MapPublicView() {
   useEffect(() => {
     if (!mapData) return;
 
-    console.log('🔍 [DEBUG] Features do mapa:', mapData.features?.slice(0, 3));
-    console.log('🔍 [DEBUG] Feature 5 properties:', mapData.features?.find(f => f.id === '5')?.properties);
-    console.log('🔍 [DEBUG] Feature 6 properties:', mapData.features?.find(f => f.id === '6')?.properties);
-
     const { layers: convertedLayers } = apiFormatToLayers(mapData);
-
-    console.log('🔍 [DEBUG] Locations convertidas:', convertedLayers.locations);
-    console.log('🔍 [DEBUG] Stores recebidas:', storesData?.map(s => ({ id: s._id, name: s.name, featureId: s.featureId })));
 
     // Enriquecer layers com dados das stores vinculadas
     let enrichedLayers = convertedLayers;
@@ -58,7 +51,6 @@ export function MapPublicView() {
         convertedLayers,
         storesData
       );
-      console.log('🔍 [DEBUG] Locations após enrichment:', enrichedLayers.locations.map(l => ({ id: l.id, name: l.name, storeId: l.storeId })));
     }
 
     layersRef.current = enrichedLayers;

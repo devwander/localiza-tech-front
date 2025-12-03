@@ -18,6 +18,8 @@ import {
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "../../lib/api";
 import { MapLocationPicker, MapPreview } from "../../components/map";
 import type { StoreFormData } from "../../components/store";
 import { StoreForm, StoreList } from "../../components/store";
@@ -34,6 +36,7 @@ import { useMap } from "../../queries/map.query";
 export const StoresPage = () => {
   const { mapId } = useParams<{ mapId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStore, setSelectedStore] = useState<Store | undefined>();
@@ -58,6 +61,24 @@ export const StoresPage = () => {
   const handleCreate = () => {
     setSelectedStore(undefined);
     setIsLocationPickerOpen(true);
+  };
+
+  const handleFixStores = async () => {
+    if (!globalThis.confirm('Deseja corrigir o vínculo de todos os espaços com o mapa? Isso é necessário apenas uma vez para espaços criados antes da correção.')) {
+      return;
+    }
+
+    try {
+      const response = await api.post(`/stores/fix/apply?mapId=${mapId}`);
+      toast.success(`${response.data.updatedCount} espaços corrigidos com sucesso!`);
+      
+      // Recarregar dados
+      queryClient.invalidateQueries({ queryKey: ["stores"] });
+      queryClient.invalidateQueries({ queryKey: ["maps", mapId] });
+    } catch (error) {
+      console.error('Erro ao corrigir espaços:', error);
+      toast.error('Erro ao corrigir espaços');
+    }
   };
 
   const handleLocationSelect = (
@@ -189,13 +210,23 @@ export const StoresPage = () => {
             Gerencie os espaços cadastrados neste mapa.
           </p>
         </div>
-        <button
-          onClick={handleCreate}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <Plus size={20} />
-          <span>Novo Espaço</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleFixStores}
+            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors flex items-center gap-2"
+            title="Corrigir vínculos de espaços antigos com o mapa"
+          >
+            <MapPin size={20} />
+            <span>Corrigir Vínculos</span>
+          </button>
+          <button
+            onClick={handleCreate}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <Plus size={20} />
+            <span>Novo Espaço</span>
+          </button>
+        </div>
       </div>
 
       {/* Visualização do Mapa */}

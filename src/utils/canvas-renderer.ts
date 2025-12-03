@@ -398,16 +398,12 @@ export class CanvasRenderer {
     let textYOffset = 0;
 
     // Para lojas - badge com ícone de categoria
-    if (
-      element.layer === "locations" &&
-      element.storeCategory &&
-      element.storeId
-    ) {
+    if (element.layer === "locations" && element.storeId) {
       const badgeSize = Math.min(32, element.width / 4);
       const badgeX = element.x + element.width - badgeSize - 8;
       const badgeY = element.y + 8;
 
-      // Obter cor da categoria
+      // Obter cor da categoria (ou cinza padrão se não tiver categoria)
       const categoryColors: Record<string, string> = {
         food: "#F97316",
         clothing: "#3B82F6",
@@ -421,7 +417,9 @@ export class CanvasRenderer {
         services: "#22D3EE",
         other: "#6B7280",
       };
-      const badgeColor = categoryColors[element.storeCategory] || "#6B7280";
+      const badgeColor = element.storeCategory 
+        ? (categoryColors[element.storeCategory] || "#6B7280")
+        : "#6B7280"; // Cinza padrão se não tiver categoria
 
       // Sombra do badge
       this.ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
@@ -446,13 +444,35 @@ export class CanvasRenderer {
       this.ctx.shadowBlur = 0;
 
       // Desenhar ícone SVG branco no centro do badge
-      this.drawCategoryIcon(
-        element.storeCategory,
-        badgeX + badgeSize / 2,
-        badgeY + badgeSize / 2,
-        badgeSize * 0.5,
-        "#FFFFFF"
-      );
+      if (element.storeCategory) {
+        this.drawCategoryIcon(
+          element.storeCategory,
+          badgeX + badgeSize / 2,
+          badgeY + badgeSize / 2,
+          badgeSize * 0.5,
+          "#FFFFFF"
+        );
+      } else {
+        // Se não tiver categoria, desenhar ícone genérico de loja (MapPin)
+        const iconSize = badgeSize * 0.5;
+        this.ctx.strokeStyle = "#FFFFFF";
+        this.ctx.lineWidth = 2;
+        this.ctx.lineCap = "round";
+        this.ctx.lineJoin = "round";
+        
+        const cx = badgeX + badgeSize / 2;
+        const cy = badgeY + badgeSize / 2;
+        const r = iconSize / 3;
+        
+        // Desenhar pin de localização simples
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy - r * 0.5, r, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy + r * 0.5);
+        this.ctx.lineTo(cx, cy + r * 1.5);
+        this.ctx.stroke();
+      }
     }
 
     // Para submapas - badge com cor do layer
@@ -561,8 +581,8 @@ export class CanvasRenderer {
     const text = element.name || element.type || "Sem nome";
     const maxWidth = element.width - 24;
 
-    if (isStore && element.storeCategory) {
-      // Lojas: título + subtítulo (categoria)
+    if (isStore) {
+      // Lojas: título + subtítulo (categoria se disponível)
       const titleFontSize = Math.min(13, Math.max(11, element.width / 12));
       const subtitleFontSize = Math.min(10, Math.max(8, element.width / 16));
 
@@ -574,24 +594,31 @@ export class CanvasRenderer {
       this.ctx.fillText(text, centerX, centerY - 6, maxWidth);
 
       // Subtítulo (categoria)
-      const categoryLabels: Record<string, string> = {
-        food: "ALIMENTAÇÃO",
-        clothing: "ROUPAS",
-        electronics: "TECNOLOGIA",
-        jewelry: "JOIAS",
-        books: "LIVROS",
-        sports: "ESPORTES",
-        home: "CASA",
-        beauty: "BELEZA",
-        toys: "BRINQUEDOS",
-        services: "SERVIÇOS",
-        other: "OUTROS",
-      };
-      const categoryText = categoryLabels[element.storeCategory] || "OUTROS";
+      if (element.storeCategory) {
+        const categoryLabels: Record<string, string> = {
+          food: "ALIMENTAÇÃO",
+          clothing: "ROUPAS",
+          electronics: "TECNOLOGIA",
+          jewelry: "JOIAS",
+          books: "LIVROS",
+          sports: "ESPORTES",
+          home: "CASA",
+          beauty: "BELEZA",
+          toys: "BRINQUEDOS",
+          services: "SERVIÇOS",
+          other: "OUTROS",
+        };
+        const categoryText = categoryLabels[element.storeCategory] || "OUTROS";
 
-      this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
-      this.ctx.fillStyle = "#9CA3AF";
-      this.ctx.fillText(categoryText, centerX, centerY + 8, maxWidth);
+        this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+        this.ctx.fillStyle = "#9CA3AF";
+        this.ctx.fillText(categoryText, centerX, centerY + 8, maxWidth);
+      } else {
+        // Se não tiver categoria, mostrar "ESPAÇO"
+        this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+        this.ctx.fillStyle = "#9CA3AF";
+        this.ctx.fillText("ESPAÇO", centerX, centerY + 8, maxWidth);
+      }
     } else if (isSubmap) {
       // Submapas: título + subtítulo "SUBMAPA"
       const titleFontSize = Math.min(13, Math.max(11, element.width / 12));

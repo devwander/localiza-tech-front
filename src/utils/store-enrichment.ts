@@ -13,23 +13,31 @@ export function enrichLayersWithStoreData(
 
   // Função para enriquecer um elemento de localização
   const enrichElement = (element: LocationElement): LocationElement => {
+    // Se não tem storeId, retornar elemento sem modificação
     if (!element.storeId) {
       return element;
     }
 
+    // Buscar a store correspondente
     const store = storeMap.get(element.storeId);
+    
+    // Se não encontrar a store, manter o storeId mas retornar sem enriquecimento
     if (!store) {
       return element;
     }
 
     // Retornar elemento enriquecido com informações da loja
-    return {
+    const enriched: LocationElement = {
       ...element,
-      name: store.name, // Copiar o nome da loja
+      name: store.name,
       storeName: store.name,
       storeCategory: store.category,
       storeLogo: store.logo || undefined,
+      // Garantir que o storeId seja mantido
+      storeId: element.storeId,
     };
+
+    return enriched;
   };
 
   // Enriquecer todos os elementos
