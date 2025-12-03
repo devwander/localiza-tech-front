@@ -6,7 +6,6 @@ import type {
   MapElement,
   MapLayers,
 } from "../types/fair-mapper";
-import { ColorUtils } from "./layer-utils";
 
 const LAYER_CONFIG = {
   locations: { zIndex: 3, color: "#EF4444", name: "Locais" },
@@ -17,16 +16,23 @@ const LAYER_CONFIG = {
 // SVG paths dos ícones lucide-react para cada categoria
 const CATEGORY_ICONS: Record<string, string> = {
   food: "M3 2l2.01 18.23L12 17l6.99 3.23L21 2H3zm7 12V7h4v7l-2-1-2 1z", // UtensilsCrossed
-  clothing: "M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6zm0 0h12m-9 5h6", // ShoppingBag
-  electronics: "M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16", // Laptop
-  jewelry: "M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z", // Gem
+  clothing:
+    "M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6zm0 0h12m-9 5h6", // ShoppingBag
+  electronics:
+    "M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16", // Laptop
+  jewelry:
+    "M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z", // Gem
   books: "M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20", // BookOpen
-  sports: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6m0 5V4m0 5h12m0 0V4m0 5h1.5a2.5 2.5 0 0 0 0-5H18m0 5v10m0-10L6 19m12 0h1.5a2.5 2.5 0 0 1 0 5H18m-12 0H4.5a2.5 2.5 0 0 0 0 5H6m0-5v-5", // Trophy
+  sports:
+    "M6 9H4.5a2.5 2.5 0 0 1 0-5H6m0 5V4m0 5h12m0 0V4m0 5h1.5a2.5 2.5 0 0 0 0-5H18m0 5v10m0-10L6 19m12 0h1.5a2.5 2.5 0 0 1 0 5H18m-12 0H4.5a2.5 2.5 0 0 0 0 5H6m0-5v-5", // Trophy
   home: "m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10", // Home
-  beauty: "m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z", // Sparkles
+  beauty:
+    "m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z", // Sparkles
   toys: "M9 12h.01M15 12h.01M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5m-7 6 1-9m6 9-1-9M6 19c.7-1.2 1.8-2 3-2m9 2c-.7-1.2-1.8-2-3-2m3-5a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z", // Baby
-  services: "M8 2v4m8-4v4M3 10h18m-9 4h.01M8 14h.01m7.99 0h.01M8 18h.01m3.99 0h.01m3.99 0h.01M5 22h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z", // Calendar
-  other: "M16 16h2a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-6m-2 10H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6m-2 10V6m10 4L3 3", // Package
+  services:
+    "M8 2v4m8-4v4M3 10h18m-9 4h.01M8 14h.01m7.99 0h.01M8 18h.01m3.99 0h.01m3.99 0h.01M5 22h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z", // Calendar
+  other:
+    "M16 16h2a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-6m-2 10H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6m-2 10V6m10 4L3 3", // Package
 };
 
 const SELECTION_CONFIG = {
@@ -52,7 +58,7 @@ export class CanvasRenderer {
     height: number;
   } | null = null;
   private imageCache: Map<string, HTMLImageElement> = new Map();
-  
+
   // Armazenar a transformação atual para conversão de coordenadas
   private currentTransform = {
     offsetX: 0,
@@ -190,7 +196,7 @@ export class CanvasRenderer {
    * Renderiza uma camada específica
    */
   private renderLayer(
-    layers: MapLayers, 
+    layers: MapLayers,
     layerName: LayerType,
     filteredStoreIds?: Set<string>,
     hasActiveFilters: boolean = false
@@ -226,12 +232,13 @@ export class CanvasRenderer {
     const isStore = element.layer === "locations" && element.storeId;
     const isSubmap = element.layer === "submaps";
     const isBackground = element.layer === "background";
-    
+
     // Determinar se este elemento está filtrado
-    const isFiltered = hasActiveFilters && isStore && filteredStoreIds 
-      ? filteredStoreIds.has(element.storeId!)
-      : true;
-    
+    const isFiltered =
+      hasActiveFilters && isStore && filteredStoreIds
+        ? filteredStoreIds.has(element.storeId!)
+        : true;
+
     // Aplicar opacidade reduzida para elementos não filtrados
     const opacity = !hasActiveFilters || isFiltered ? 1 : 0.25;
     this.ctx.globalAlpha = opacity;
@@ -251,7 +258,13 @@ export class CanvasRenderer {
 
     // Corpo do elemento - branco para todos
     this.ctx.fillStyle = "#FFFFFF";
-    this.drawRoundedRect(element.x, element.y, element.width, element.height, radius);
+    this.drawRoundedRect(
+      element.x,
+      element.y,
+      element.width,
+      element.height,
+      radius
+    );
     this.ctx.fill();
 
     // Remover sombra para próximos desenhos
@@ -270,7 +283,13 @@ export class CanvasRenderer {
       this.ctx.setLineDash([]);
     }
 
-    this.drawRoundedRect(element.x, element.y, element.width, element.height, radius);
+    this.drawRoundedRect(
+      element.x,
+      element.y,
+      element.width,
+      element.height,
+      radius
+    );
     this.ctx.stroke();
 
     // Adicionar destaque visual para elementos filtrados (borda azul)
@@ -278,7 +297,13 @@ export class CanvasRenderer {
       this.ctx.strokeStyle = "#3B82F6";
       this.ctx.lineWidth = 3;
       this.ctx.setLineDash([]);
-      this.drawRoundedRect(element.x, element.y, element.width, element.height, radius);
+      this.drawRoundedRect(
+        element.x,
+        element.y,
+        element.width,
+        element.height,
+        radius
+      );
       this.ctx.stroke();
     }
 
@@ -324,30 +349,30 @@ export class CanvasRenderer {
     color: string
   ): void {
     const iconPath = CATEGORY_ICONS[category] || CATEGORY_ICONS.other;
-    
+
     this.ctx.save();
     this.ctx.translate(centerX, centerY);
-    
+
     // Escalar o ícone para o tamanho desejado (ícones lucide são 24x24 por padrão)
     const scale = size / 24;
     this.ctx.scale(scale, scale);
-    
+
     // Centralizar o ícone (compensar o viewBox 0 0 24 24)
     this.ctx.translate(-12, -12);
-    
+
     // Criar path a partir do SVG
     const path = new Path2D(iconPath);
-    
+
     // Configurar estilo
     this.ctx.strokeStyle = color;
     this.ctx.lineWidth = 2;
     this.ctx.lineCap = "round";
     this.ctx.lineJoin = "round";
     this.ctx.fillStyle = "transparent";
-    
+
     // Desenhar o path
     this.ctx.stroke(path);
-    
+
     this.ctx.restore();
   }
 
@@ -371,9 +396,13 @@ export class CanvasRenderer {
 
     // Badge colorido no canto superior direito
     let textYOffset = 0;
-    
+
     // Para lojas - badge com ícone de categoria
-    if (element.layer === "locations" && element.storeCategory && element.storeId) {
+    if (
+      element.layer === "locations" &&
+      element.storeCategory &&
+      element.storeId
+    ) {
       const badgeSize = Math.min(32, element.width / 4);
       const badgeX = element.x + element.width - badgeSize - 8;
       const badgeY = element.y + 8;
@@ -403,7 +432,13 @@ export class CanvasRenderer {
       // Badge circular colorido
       this.ctx.fillStyle = badgeColor;
       this.ctx.beginPath();
-      this.ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+      this.ctx.arc(
+        badgeX + badgeSize / 2,
+        badgeY + badgeSize / 2,
+        badgeSize / 2,
+        0,
+        Math.PI * 2
+      );
       this.ctx.fill();
 
       // Remover sombra
@@ -419,7 +454,7 @@ export class CanvasRenderer {
         "#FFFFFF"
       );
     }
-    
+
     // Para submapas - badge com cor do layer
     if (element.layer === "submaps") {
       const badgeSize = Math.min(32, element.width / 4);
@@ -435,7 +470,13 @@ export class CanvasRenderer {
       // Badge circular com cor do submapa
       this.ctx.fillStyle = LAYER_CONFIG.submaps.color;
       this.ctx.beginPath();
-      this.ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+      this.ctx.arc(
+        badgeX + badgeSize / 2,
+        badgeY + badgeSize / 2,
+        badgeSize / 2,
+        0,
+        Math.PI * 2
+      );
       this.ctx.fill();
 
       // Remover sombra
@@ -448,11 +489,11 @@ export class CanvasRenderer {
       this.ctx.lineWidth = 2;
       this.ctx.lineCap = "round";
       this.ctx.lineJoin = "round";
-      
+
       const cx = badgeX + badgeSize / 2;
       const cy = badgeY + badgeSize / 2;
       const r = iconSize / 2;
-      
+
       // Desenhar ícone de grid 3x3
       this.ctx.beginPath();
       this.ctx.moveTo(cx - r * 0.6, cy - r);
@@ -465,7 +506,7 @@ export class CanvasRenderer {
       this.ctx.lineTo(cx + r, cy + r * 0.6);
       this.ctx.stroke();
     }
-    
+
     // Para background - badge com cor do layer
     if (element.layer === "background") {
       const badgeSize = Math.min(32, element.width / 4);
@@ -481,7 +522,13 @@ export class CanvasRenderer {
       // Badge circular com cor do background
       this.ctx.fillStyle = LAYER_CONFIG.background.color;
       this.ctx.beginPath();
-      this.ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+      this.ctx.arc(
+        badgeX + badgeSize / 2,
+        badgeY + badgeSize / 2,
+        badgeSize / 2,
+        0,
+        Math.PI * 2
+      );
       this.ctx.fill();
 
       // Remover sombra
@@ -494,11 +541,11 @@ export class CanvasRenderer {
       this.ctx.lineWidth = 2;
       this.ctx.lineCap = "round";
       this.ctx.lineJoin = "round";
-      
+
       const cx = badgeX + badgeSize / 2;
       const cy = badgeY + badgeSize / 2;
       const r = iconSize / 2;
-      
+
       // Desenhar ícone de camadas (3 retângulos empilhados)
       this.ctx.fillStyle = "#FFFFFF";
       this.ctx.fillRect(cx - r * 0.8, cy - r * 0.8, r * 1.6, r * 0.4);
@@ -510,22 +557,22 @@ export class CanvasRenderer {
     const isStore = element.layer === "locations" && element.storeId;
     const isSubmap = element.layer === "submaps";
     const isBackground = element.layer === "background";
-    
+
     const text = element.name || element.type || "Sem nome";
     const maxWidth = element.width - 24;
-    
+
     if (isStore && element.storeCategory) {
       // Lojas: título + subtítulo (categoria)
       const titleFontSize = Math.min(13, Math.max(11, element.width / 12));
       const subtitleFontSize = Math.min(10, Math.max(8, element.width / 16));
-      
+
       // Título (nome da loja)
       this.ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
       this.ctx.fillStyle = "#1F2937";
       this.ctx.fillText(text, centerX, centerY - 6, maxWidth);
-      
+
       // Subtítulo (categoria)
       const categoryLabels: Record<string, string> = {
         food: "ALIMENTAÇÃO",
@@ -541,7 +588,7 @@ export class CanvasRenderer {
         other: "OUTROS",
       };
       const categoryText = categoryLabels[element.storeCategory] || "OUTROS";
-      
+
       this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.fillStyle = "#9CA3AF";
       this.ctx.fillText(categoryText, centerX, centerY + 8, maxWidth);
@@ -549,14 +596,14 @@ export class CanvasRenderer {
       // Submapas: título + subtítulo "SUBMAPA"
       const titleFontSize = Math.min(13, Math.max(11, element.width / 12));
       const subtitleFontSize = Math.min(10, Math.max(8, element.width / 16));
-      
+
       // Título
       this.ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
       this.ctx.fillStyle = "#1F2937";
       this.ctx.fillText(text, centerX, centerY - 6, maxWidth);
-      
+
       // Subtítulo
       this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.fillStyle = "#9CA3AF";
@@ -565,14 +612,14 @@ export class CanvasRenderer {
       // Background: título + subtítulo "FUNDO"
       const titleFontSize = Math.min(13, Math.max(11, element.width / 12));
       const subtitleFontSize = Math.min(10, Math.max(8, element.width / 16));
-      
+
       // Título
       this.ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
       this.ctx.fillStyle = "#1F2937";
       this.ctx.fillText(text, centerX, centerY - 6, maxWidth);
-      
+
       // Subtítulo
       this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
       this.ctx.fillStyle = "#9CA3AF";
@@ -745,7 +792,12 @@ export class CanvasRenderer {
     this.ctx.lineTo(x + width - radius, y);
     this.ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
     this.ctx.lineTo(x + width, y + height - radius);
-    this.ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    this.ctx.quadraticCurveTo(
+      x + width,
+      y + height,
+      x + width - radius,
+      y + height
+    );
     this.ctx.lineTo(x + radius, y + height);
     this.ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
     this.ctx.lineTo(x, y + radius);
@@ -829,11 +881,11 @@ export class CanvasRenderer {
    */
   screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
     const { offsetX, offsetY, scale } = this.currentTransform;
-    
+
     // Aplicar transformação inversa
     const worldX = (screenX - offsetX) / scale;
     const worldY = (screenY - offsetY) / scale;
-    
+
     return { x: worldX, y: worldY };
   }
 
@@ -875,7 +927,15 @@ export function useCanvasRenderer(
     ): void => {
       const canvasRenderer = getRenderer();
       if (canvasRenderer) {
-        canvasRenderer.render(layers, selectedElement, debugMode, debugInfo, filteredStoreIds, hasActiveFilters, zoomLevel);
+        canvasRenderer.render(
+          layers,
+          selectedElement,
+          debugMode,
+          debugInfo,
+          filteredStoreIds,
+          hasActiveFilters,
+          zoomLevel
+        );
       }
     },
     [getRenderer]
