@@ -6,13 +6,27 @@ import type {
   MapElement,
   MapLayers,
 } from "../types/fair-mapper";
-import { getCategoryEmoji } from "./category-icons";
 import { ColorUtils } from "./layer-utils";
 
 const LAYER_CONFIG = {
   locations: { zIndex: 3, color: "#EF4444", name: "Locais" },
   submaps: { zIndex: 2, color: "#3B82F6", name: "Submapas" },
   background: { zIndex: 1, color: "#6B7280", name: "Background" },
+};
+
+// SVG paths dos ícones lucide-react para cada categoria
+const CATEGORY_ICONS: Record<string, string> = {
+  food: "M3 2l2.01 18.23L12 17l6.99 3.23L21 2H3zm7 12V7h4v7l-2-1-2 1z", // UtensilsCrossed
+  clothing: "M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6zm0 0h12m-9 5h6", // ShoppingBag
+  electronics: "M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16", // Laptop
+  jewelry: "M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z", // Gem
+  books: "M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20", // BookOpen
+  sports: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6m0 5V4m0 5h12m0 0V4m0 5h1.5a2.5 2.5 0 0 0 0-5H18m0 5v10m0-10L6 19m12 0h1.5a2.5 2.5 0 0 1 0 5H18m-12 0H4.5a2.5 2.5 0 0 0 0 5H6m0-5v-5", // Trophy
+  home: "m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10", // Home
+  beauty: "m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z", // Sparkles
+  toys: "M9 12h.01M15 12h.01M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5m-7 6 1-9m6 9-1-9M6 19c.7-1.2 1.8-2 3-2m9 2c-.7-1.2-1.8-2-3-2m3-5a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z", // Baby
+  services: "M8 2v4m8-4v4M3 10h18m-9 4h.01M8 14h.01m7.99 0h.01M8 18h.01m3.99 0h.01m3.99 0h.01M5 22h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z", // Calendar
+  other: "M16 16h2a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-6m-2 10H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6m-2 10V6m10 4L3 3", // Package
 };
 
 const SELECTION_CONFIG = {
@@ -55,7 +69,10 @@ export class CanvasRenderer {
     layers: MapLayers,
     selectedElement: MapElement | null = null,
     debugMode: boolean = false,
-    debugInfo?: DebugInfo
+    debugInfo?: DebugInfo,
+    filteredStoreIds?: Set<string>,
+    hasActiveFilters: boolean = false,
+    zoomLevel: number = 1
   ): void {
     this.clearCanvas();
 
@@ -67,7 +84,7 @@ export class CanvasRenderer {
     ];
 
     if (allElements.length > 0) {
-      this.centerContent(allElements);
+      this.centerContent(allElements, zoomLevel);
     } else {
       // No elements to render, just return
       return;
@@ -92,9 +109,9 @@ export class CanvasRenderer {
     }
 
     // Renderizar na ordem Z crescente (background primeiro, locations por último)
-    this.renderLayer(layers, "background");
-    this.renderLayer(layers, "submaps");
-    this.renderLayer(layers, "locations");
+    this.renderLayer(layers, "background", filteredStoreIds, hasActiveFilters);
+    this.renderLayer(layers, "submaps", filteredStoreIds, hasActiveFilters);
+    this.renderLayer(layers, "locations", filteredStoreIds, hasActiveFilters);
 
     // Highlight do elemento selecionado
     if (selectedElement) {
@@ -115,7 +132,7 @@ export class CanvasRenderer {
   /**
    * Centraliza o conteúdo do mapa no canvas
    */
-  private centerContent(elements: MapElement[]): void {
+  private centerContent(elements: MapElement[], zoomLevel: number = 1): void {
     if (elements.length === 0) return;
 
     // Calculate bounding box of all elements
@@ -140,7 +157,8 @@ export class CanvasRenderer {
     const padding = 40;
     const scaleX = (canvasWidth - padding * 2) / contentWidth;
     const scaleY = (canvasHeight - padding * 2) / contentHeight;
-    const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+    const baseScale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+    const scale = baseScale * zoomLevel; // Apply zoom level
 
     // Calculate translation to center the scaled content
     const scaledWidth = contentWidth * scale;
@@ -157,17 +175,26 @@ export class CanvasRenderer {
   /**
    * Renderiza uma camada específica
    */
-  private renderLayer(layers: MapLayers, layerName: LayerType): void {
+  private renderLayer(
+    layers: MapLayers, 
+    layerName: LayerType,
+    filteredStoreIds?: Set<string>,
+    hasActiveFilters: boolean = false
+  ): void {
     const elements = layers[layerName];
     elements.forEach((element) => {
-      this.drawElement(element);
+      this.drawElement(element, filteredStoreIds, hasActiveFilters);
     });
   }
 
   /**
    * Desenha um elemento individual
    */
-  private drawElement(element: MapElement): void {
+  private drawElement(
+    element: MapElement,
+    filteredStoreIds?: Set<string>,
+    hasActiveFilters: boolean = false
+  ): void {
     // Validar valores antes de desenhar
     if (
       !isFinite(element.x) ||
@@ -181,13 +208,50 @@ export class CanvasRenderer {
       return;
     }
 
-    // Corpo do elemento
-    this.ctx.fillStyle = element.color;
-    this.ctx.fillRect(element.x, element.y, element.width, element.height);
+    const radius = 12; // Bordas mais arredondadas
+    const isStore = element.layer === "locations" && element.storeId;
+    
+    // Determinar se este elemento está filtrado
+    const isFiltered = hasActiveFilters && isStore && filteredStoreIds 
+      ? filteredStoreIds.has(element.storeId!)
+      : true;
+    
+    // Aplicar opacidade reduzida para elementos não filtrados
+    const opacity = !hasActiveFilters || isFiltered ? 1 : 0.25;
+    this.ctx.globalAlpha = opacity;
 
-    // Borda
-    this.ctx.strokeStyle = element.borderColor;
-    this.ctx.lineWidth = 1;
+    // Sombra mais pronunciada para lojas filtradas
+    if (isStore && isFiltered) {
+      this.ctx.shadowColor = "rgba(0, 0, 0, 0.08)";
+      this.ctx.shadowBlur = 16;
+      this.ctx.shadowOffsetX = 0;
+      this.ctx.shadowOffsetY = 2;
+    } else if (element.layer === "locations") {
+      this.ctx.shadowColor = "rgba(0, 0, 0, 0.04)";
+      this.ctx.shadowBlur = 8;
+      this.ctx.shadowOffsetX = 0;
+      this.ctx.shadowOffsetY = 1;
+    }
+
+    // Corpo do elemento - branco para lojas, cor original para outros
+    this.ctx.fillStyle = isStore ? "#FFFFFF" : element.color;
+    this.drawRoundedRect(element.x, element.y, element.width, element.height, radius);
+    this.ctx.fill();
+
+    // Remover sombra para próximos desenhos
+    this.ctx.shadowColor = "transparent";
+    this.ctx.shadowBlur = 0;
+    this.ctx.shadowOffsetX = 0;
+    this.ctx.shadowOffsetY = 0;
+
+    // Borda sutil
+    if (isStore) {
+      this.ctx.strokeStyle = "#E5E7EB";
+      this.ctx.lineWidth = 1;
+    } else {
+      this.ctx.strokeStyle = element.borderColor;
+      this.ctx.lineWidth = 1;
+    }
 
     if (element.layer === "submaps") {
       this.ctx.setLineDash([5, 5]);
@@ -195,11 +259,16 @@ export class CanvasRenderer {
       this.ctx.setLineDash([]);
     }
 
-    this.ctx.strokeRect(element.x, element.y, element.width, element.height);
+    this.drawRoundedRect(element.x, element.y, element.width, element.height, radius);
+    this.ctx.stroke();
 
-    // Indicador visual de loja vinculada (pequeno badge no canto)
-    if (element.layer === "locations" && element.storeId) {
-      this.drawStoreLinkedBadge(element);
+    // Adicionar destaque visual para elementos filtrados (borda azul)
+    if (hasActiveFilters && isFiltered && isStore) {
+      this.ctx.strokeStyle = "#3B82F6";
+      this.ctx.lineWidth = 3;
+      this.ctx.setLineDash([]);
+      this.drawRoundedRect(element.x, element.y, element.width, element.height, radius);
+      this.ctx.stroke();
     }
 
     // Texto/Label
@@ -207,32 +276,9 @@ export class CanvasRenderer {
 
     // Debug: mostrar Z-index se debug mode ativo
     this.drawElementDebugInfo(element);
-  }
 
-  /**
-   * Desenha um badge indicando que o local está vinculado a uma loja
-   */
-  private drawStoreLinkedBadge(element: MapElement): void {
-    const badgeSize = 8;
-    const badgeX = element.x + element.width - badgeSize - 2;
-    const badgeY = element.y + 2;
-
-    // Círculo verde indicando vínculo
-    this.ctx.fillStyle = "#10B981";
-    this.ctx.beginPath();
-    this.ctx.arc(
-      badgeX + badgeSize / 2,
-      badgeY + badgeSize / 2,
-      badgeSize / 2,
-      0,
-      Math.PI * 2
-    );
-    this.ctx.fill();
-
-    // Borda branca para destaque
-    this.ctx.strokeStyle = "#FFFFFF";
-    this.ctx.lineWidth = 1;
-    this.ctx.stroke();
+    // Resetar globalAlpha
+    this.ctx.globalAlpha = 1;
   }
 
   /**
@@ -257,6 +303,44 @@ export class CanvasRenderer {
   }
 
   /**
+   * Desenha um ícone de categoria usando path SVG
+   */
+  private drawCategoryIcon(
+    category: string,
+    centerX: number,
+    centerY: number,
+    size: number,
+    color: string
+  ): void {
+    const iconPath = CATEGORY_ICONS[category] || CATEGORY_ICONS.other;
+    
+    this.ctx.save();
+    this.ctx.translate(centerX, centerY);
+    
+    // Escalar o ícone para o tamanho desejado (ícones lucide são 24x24 por padrão)
+    const scale = size / 24;
+    this.ctx.scale(scale, scale);
+    
+    // Centralizar o ícone (compensar o viewBox 0 0 24 24)
+    this.ctx.translate(-12, -12);
+    
+    // Criar path a partir do SVG
+    const path = new Path2D(iconPath);
+    
+    // Configurar estilo
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 2;
+    this.ctx.lineCap = "round";
+    this.ctx.lineJoin = "round";
+    this.ctx.fillStyle = "transparent";
+    
+    // Desenhar o path
+    this.ctx.stroke(path);
+    
+    this.ctx.restore();
+  }
+
+  /**
    * Desenha o texto do elemento
    */
   private drawElementText(element: MapElement): void {
@@ -274,33 +358,100 @@ export class CanvasRenderer {
       }
     }
 
-    // Se o elemento tiver uma loja vinculada, mostrar ícone da categoria
+    // Badge colorido com ícone no canto superior direito (como na imagem)
     let textYOffset = 0;
-    if (element.layer === "locations" && element.storeCategory) {
-      const emoji = getCategoryEmoji(element.storeCategory);
-      const emojiSize = Math.min(20, element.width / 4);
+    if (element.layer === "locations" && element.storeCategory && element.storeId) {
+      const badgeSize = Math.min(32, element.width / 4);
+      const badgeX = element.x + element.width - badgeSize - 8;
+      const badgeY = element.y + 8;
 
-      this.ctx.font = `${emojiSize}px Arial`;
-      this.ctx.textAlign = "center";
-      this.ctx.textBaseline = "middle";
+      // Obter cor da categoria
+      const categoryColors: Record<string, string> = {
+        food: "#F97316",
+        clothing: "#3B82F6",
+        electronics: "#9333EA",
+        jewelry: "#EC4899",
+        books: "#EAB308",
+        sports: "#EF4444",
+        home: "#10B981",
+        beauty: "#EC4899",
+        toys: "#6366F1",
+        services: "#22D3EE",
+        other: "#6B7280",
+      };
+      const badgeColor = categoryColors[element.storeCategory] || "#6B7280";
 
-      // Desenhar emoji no topo do elemento
-      const emojiY = element.y + emojiSize;
-      this.ctx.fillText(emoji, centerX, emojiY);
+      // Sombra do badge
+      this.ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
+      this.ctx.shadowBlur = 4;
+      this.ctx.shadowOffsetX = 0;
+      this.ctx.shadowOffsetY = 2;
 
-      // Ajustar offset do texto para ficar abaixo do emoji
-      textYOffset = emojiSize / 2;
+      // Badge circular colorido
+      this.ctx.fillStyle = badgeColor;
+      this.ctx.beginPath();
+      this.ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Remover sombra
+      this.ctx.shadowColor = "transparent";
+      this.ctx.shadowBlur = 0;
+
+      // Desenhar ícone SVG branco no centro do badge
+      this.drawCategoryIcon(
+        element.storeCategory,
+        badgeX + badgeSize / 2,
+        badgeY + badgeSize / 2,
+        badgeSize * 0.5,
+        "#FFFFFF"
+      );
     }
 
-    // Desenhar o nome
-    this.ctx.fillStyle = ColorUtils.getContrastColor(element.color);
-    this.ctx.font = `${Math.min(12, element.width / 8)}px Arial`;
-    this.ctx.textAlign = "center";
-    this.ctx.textBaseline = "middle";
-
+    // Desenhar o nome e categoria
+    const isStore = element.layer === "locations" && element.storeId;
+    this.ctx.fillStyle = isStore ? "#1F2937" : ColorUtils.getContrastColor(element.color);
+    
     const text = element.name || element.type || "Sem nome";
-    const maxWidth = element.width - 4;
-    this.ctx.fillText(text, centerX, centerY + textYOffset, maxWidth);
+    const maxWidth = element.width - 24;
+    
+    if (isStore && element.storeCategory) {
+      // Layout como na imagem: título + subtítulo
+      const titleFontSize = Math.min(13, Math.max(11, element.width / 12));
+      const subtitleFontSize = Math.min(10, Math.max(8, element.width / 16));
+      
+      // Título (nome da loja)
+      this.ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillText(text, centerX, centerY - 6, maxWidth);
+      
+      // Subtítulo (categoria)
+      const categoryLabels: Record<string, string> = {
+        food: "ALIMENTAÇÃO",
+        clothing: "ROUPAS",
+        electronics: "TECNOLOGIA",
+        jewelry: "JOIAS",
+        books: "LIVROS",
+        sports: "ESPORTES",
+        home: "CASA",
+        beauty: "BELEZA",
+        toys: "BRINQUEDOS",
+        services: "SERVIÇOS",
+        other: "OUTROS",
+      };
+      const categoryText = categoryLabels[element.storeCategory] || "OUTROS";
+      
+      this.ctx.font = `400 ${subtitleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+      this.ctx.fillStyle = "#9CA3AF";
+      this.ctx.fillText(categoryText, centerX, centerY + 8, maxWidth);
+    } else {
+      // Elementos sem loja vinculada - texto simples
+      const fontSize = Math.min(12, Math.max(10, element.width / 12));
+      this.ctx.font = `500 ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif`;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillText(text, centerX, centerY, maxWidth);
+    }
   }
 
   /**
@@ -446,10 +597,35 @@ export class CanvasRenderer {
   }
 
   /**
+   * Desenha um retângulo com bordas arredondadas
+   */
+  private drawRoundedRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ): void {
+    this.ctx.beginPath();
+    this.ctx.moveTo(x + radius, y);
+    this.ctx.lineTo(x + width - radius, y);
+    this.ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    this.ctx.lineTo(x + width, y + height - radius);
+    this.ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    this.ctx.lineTo(x + radius, y + height);
+    this.ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    this.ctx.lineTo(x, y + radius);
+    this.ctx.quadraticCurveTo(x, y, x + radius, y);
+    this.ctx.closePath();
+  }
+
+  /**
    * Limpa o canvas
    */
   private clearCanvas(): void {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // Fundo cinza bem claro
+    this.ctx.fillStyle = "#F5F7FA";
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   /**
@@ -537,11 +713,14 @@ export function useCanvasRenderer(
       layers: MapLayers,
       selectedElement: MapElement | null = null,
       debugMode: boolean = false,
-      debugInfo?: DebugInfo
+      debugInfo?: DebugInfo,
+      filteredStoreIds?: Set<string>,
+      hasActiveFilters: boolean = false,
+      zoomLevel: number = 1
     ): void => {
       const canvasRenderer = getRenderer();
       if (canvasRenderer) {
-        canvasRenderer.render(layers, selectedElement, debugMode, debugInfo);
+        canvasRenderer.render(layers, selectedElement, debugMode, debugInfo, filteredStoreIds, hasActiveFilters, zoomLevel);
       }
     },
     [getRenderer]

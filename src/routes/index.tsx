@@ -6,7 +6,7 @@ import { ManagementDashboard } from "../layout";
 import { api } from "../lib";
 import { Signin } from "../pages/auth/sign-in";
 import { Signup } from "../pages/auth/sign-up";
-import { MapPublicView } from "../pages/maps/public";
+import { PublicMapView } from "../pages/maps/public/PublicMapView";
 import { StoresPage } from "../pages/stores";
 import { authStore } from "../store";
 import { Private } from "./private";
@@ -55,7 +55,7 @@ export function Router(): ReactElement {
     <Suspense fallback={<Loading />}>
       <Routes>
         {/* Public routes - accessible without authentication */}
-        <Route path="/maps/public/:id" element={<MapPublicView />} />
+        <Route path="/maps/public/:id" element={<PublicMapView />} />
 
         {!logged && (
           <Route element={<Public />}>

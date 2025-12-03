@@ -3,10 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Canvas } from "../../../components/fair-mapper/Canvas";
 import { Loading } from "../../../components/loading";
-import { usePublicMap } from "../../../queries";
-import type { MapLayers } from "../../../types/fair-mapper";
+import { StoreInfoModal } from "../../../components/store";
+import type { Store } from "../../../models";
+import { usePublicMap, useStoresByMapPublicQuery } from "../../../queries";
+import type { MapElement, MapLayers } from "../../../types/fair-mapper";
 import { useCanvasRenderer } from "../../../utils/canvas-renderer";
 import { apiFormatToLayers } from "../../../utils/map-converter";
+import { enrichLayersWithStoreData } from "../../../utils/store-enrichment";
 
 export function MapPublicView() {
   const { id } = useParams<{ id: string }>();
@@ -22,13 +25,13 @@ export function MapPublicView() {
     submaps: [],
     locations: [],
   });
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
 
   const { data: mapData, isLoading, isError, error } = usePublicMap(id);
+  const { data: storesData } = useStoresByMapPublicQuery(id || "");
 
   // Use the same canvas renderer hook as the editor
-  const { render } = useCanvasRenderer(
-    canvasRef as React.RefObject<HTMLCanvasElement>
-  );
+  const { render } = useCanvasRenderer(canvasRef);
 
   // Render canvas callback
   const renderCanvas = useCallback((): void => {
@@ -39,11 +42,28 @@ export function MapPublicView() {
   useEffect(() => {
     if (!mapData) return;
 
+    console.log('🔍 [DEBUG] Features do mapa:', mapData.features?.slice(0, 3));
+    console.log('🔍 [DEBUG] Feature 5 properties:', mapData.features?.find(f => f.id === '5')?.properties);
+    console.log('🔍 [DEBUG] Feature 6 properties:', mapData.features?.find(f => f.id === '6')?.properties);
+
     const { layers: convertedLayers } = apiFormatToLayers(mapData);
 
-    layersRef.current = convertedLayers;
-    setLayers(convertedLayers);
-  }, [mapData]);
+    console.log('🔍 [DEBUG] Locations convertidas:', convertedLayers.locations);
+    console.log('🔍 [DEBUG] Stores recebidas:', storesData?.map(s => ({ id: s._id, name: s.name, featureId: s.featureId })));
+
+    // Enriquecer layers com dados das stores vinculadas
+    let enrichedLayers = convertedLayers;
+    if (storesData && storesData.length > 0) {
+      enrichedLayers = enrichLayersWithStoreData(
+        convertedLayers,
+        storesData
+      );
+      console.log('🔍 [DEBUG] Locations após enrichment:', enrichedLayers.locations.map(l => ({ id: l.id, name: l.name, storeId: l.storeId })));
+    }
+
+    layersRef.current = enrichedLayers;
+    setLayers(enrichedLayers);
+  }, [mapData, storesData]);
 
   // Re-render when layers change (similar to useFairMapper)
   useEffect(() => {
@@ -56,7 +76,7 @@ export function MapPublicView() {
       renderCanvas();
     };
 
-    window.addEventListener("canvas-resized", handleCanvasResize);
+    globalThis.addEventListener("canvas-resized", handleCanvasResize);
 
     // Initial render with a delay to ensure canvas is ready
     const timer = setTimeout(() => {
@@ -64,10 +84,30 @@ export function MapPublicView() {
     }, 100);
 
     return () => {
-      window.removeEventListener("canvas-resized", handleCanvasResize);
+      globalThis.removeEventListener("canvas-resized", handleCanvasResize);
       clearTimeout(timer);
     };
   }, [renderCanvas]);
+
+  // Handler para clique no canvas
+  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const dpr = globalThis.devicePixelRatio || 1;
+    const x = (e.clientX - rect.left) * dpr;
+    const y = (e.clientY - rect.top) * dpr;
+
+    // Procurar elemento clicado nos locais
+    const clickedElement = findElementAtPoint(x, y, layers.locations);
+
+    if (clickedElement?.storeId && storesData) {
+      const store = storesData.find(
+        (s) => s._id === clickedElement.storeId
+      );
+      if (store) {
+        setSelectedStore(store);
+      }
+    }
+  };
 
   if (isLoading) {
     return <Loading />;
@@ -160,7 +200,15 @@ export function MapPublicView() {
                 <div>Locais: {layers.locations.length}</div>
               </div>
             )}
-            <Canvas canvasRef={canvasRef} />
+            <div 
+              onClick={handleCanvasClick}
+              onKeyDown={(e) => e.key === 'Enter' && handleCanvasClick(e as unknown as React.MouseEvent<HTMLDivElement>)}
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer"
+            >
+              <Canvas canvasRef={canvasRef} />
+            </div>
           </div>
         </div>
       </div>
@@ -188,6 +236,35 @@ export function MapPublicView() {
           </div>
         </div>
       </footer>
+
+      {/* Modal de Informações da Store */}
+      {selectedStore && (
+        <StoreInfoModal
+          store={selectedStore}
+          onClose={() => setSelectedStore(null)}
+        />
+      )}
     </div>
   );
+}
+
+// Helper function para encontrar elemento em uma posição
+function findElementAtPoint(
+  x: number,
+  y: number,
+  elements: MapElement[]
+): MapElement | null {
+  // Procurar do último para o primeiro (ordem Z reversa)
+  for (let i = elements.length - 1; i >= 0; i--) {
+    const element = elements[i];
+    if (
+      x >= element.x &&
+      x <= element.x + element.width &&
+      y >= element.y &&
+      y <= element.y + element.height
+    ) {
+      return element;
+    }
+  }
+  return null;
 }

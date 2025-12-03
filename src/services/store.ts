@@ -28,6 +28,11 @@ export const storeService = {
     return response.data;
   },
 
+  async findByMapIdPublic(mapId: string): Promise<Store[]> {
+    const response = await api.get(`/stores/public/map/${mapId}`);
+    return response.data;
+  },
+
   async update(id: string, data: UpdateStoreRequest): Promise<Store> {
     const response = await api.patch(`/stores/${id}`, data);
     return response.data;

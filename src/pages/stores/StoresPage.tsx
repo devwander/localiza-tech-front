@@ -18,7 +18,7 @@ import {
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { MapPreview } from "../../components/map";
+import { MapLocationPicker, MapPreview } from "../../components/map";
 import type { StoreFormData } from "../../components/store";
 import { StoreForm, StoreList } from "../../components/store";
 import type { Store, StoreCategory } from "../../models";
@@ -34,12 +34,15 @@ import { useMap } from "../../queries/map.query";
 export const StoresPage = () => {
   const { mapId } = useParams<{ mapId: string }>();
   const navigate = useNavigate();
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStore, setSelectedStore] = useState<Store | undefined>();
   const [selectedFeatureId, setSelectedFeatureId] = useState<string>("");
   const [selectedLocation, setSelectedLocation] = useState<{
     x: number;
     y: number;
+    width?: number;
+    height?: number;
   }>({ x: 0, y: 0 });
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<StoreCategory | "all">(
@@ -53,10 +56,17 @@ export const StoresPage = () => {
   const deleteMutation = useDeleteStoreMutation();
 
   const handleCreate = () => {
-    // TODO: Integrar com o mapa para selecionar o feature/localização
     setSelectedStore(undefined);
-    setSelectedFeatureId("feature-id-placeholder");
-    setSelectedLocation({ x: 0, y: 0 });
+    setIsLocationPickerOpen(true);
+  };
+
+  const handleLocationSelect = (
+    featureId: string,
+    location: { x: number; y: number; width?: number; height?: number }
+  ) => {
+    setSelectedFeatureId(featureId);
+    setSelectedLocation(location);
+    setIsLocationPickerOpen(false);
     setIsModalOpen(true);
   };
 
@@ -157,6 +167,9 @@ export const StoresPage = () => {
     acc[store.category] = (acc[store.category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  // Features já ocupados por stores
+  const occupiedFeatureIds = stores.map((store) => store.featureId);
 
   return (
     <div className="container mx-auto px-4 py-12 mt-8">
@@ -303,6 +316,17 @@ export const StoresPage = () => {
         isLoading={isLoading}
       />
 
+      {/* Modal de Seleção de Local */}
+      {isLocationPickerOpen && mapData && (
+        <MapLocationPicker
+          map={mapData}
+          onSelect={handleLocationSelect}
+          onCancel={() => setIsLocationPickerOpen(false)}
+          excludeFeatureIds={occupiedFeatureIds}
+        />
+      )}
+
+      {/* Modal de Criação/Edição */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">

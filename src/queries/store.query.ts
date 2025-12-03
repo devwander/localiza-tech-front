@@ -24,3 +24,11 @@ export const useStoresByMapQuery = (mapId: string) => {
     enabled: !!mapId,
   });
 };
+
+export const useStoresByMapPublicQuery = (mapId: string) => {
+  return useQuery({
+    queryKey: ["stores", "public", "map", mapId],
+    queryFn: () => Service.store.findByMapIdPublic(mapId),
+    enabled: !!mapId,
+  });
+};
