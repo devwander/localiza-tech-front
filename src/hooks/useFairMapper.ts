@@ -531,7 +531,7 @@ export function useFairMapper(): UseFairMapperReturn {
    * SEMPRE usa os dados da API - sem cache
    */
   const loadLayers = useCallback(
-    (newLayers: MapLayers, nextId?: number, mapId?: string): void => {
+    (newLayers: MapLayers, nextId?: number): void => {
       setLayers(newLayers);
       if (nextId !== undefined) {
         nextIdRef.current = nextId;
