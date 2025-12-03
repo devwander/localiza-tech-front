@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useStoresQuery } from "../../queries";
 import type { MapElement } from "../../types/fair-mapper";
+import { DeleteElementModal } from "../modal";
 
 interface PropertiesPanelProps {
   selectedElement: MapElement | null;
@@ -32,6 +33,8 @@ export function PropertiesPanel({
     height: 0,
     storeId: "",
   });
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Função para copiar informações da loja quando vinculada
   const handleStoreLink = (storeId: string) => {
@@ -96,26 +99,24 @@ export function PropertiesPanel({
     }
   }, [selectedElement]);
 
-  const handleUpdate = () => {
-    if (!selectedElement) return;
-
-    onUpdateElement(selectedElement.id, {
-      name: formData.name,
-      color: formData.color,
-      x: formData.x,
-      y: formData.y,
-      width: formData.width,
-      height: formData.height,
-      storeId: formData.storeId || undefined,
-    });
-  };
-
   const handleDelete = () => {
     if (!selectedElement) return;
+    onDeleteElement(selectedElement.id);
+  };
 
-    if (confirm("Tem certeza que deseja excluir este elemento?")) {
-      onDeleteElement(selectedElement.id);
-    }
+  const handleFieldChange = (
+    field: keyof typeof formData,
+    value: string | number
+  ) => {
+    const newFormData = { ...formData, [field]: value };
+    setFormData(newFormData);
+
+    if (!selectedElement) return;
+
+    // Atualizar imediatamente o elemento
+    onUpdateElement(selectedElement.id, {
+      [field]: value === "" && field === "storeId" ? undefined : value,
+    });
   };
 
   const getTypeOptions = () => {
@@ -158,9 +159,7 @@ export function PropertiesPanel({
             <input
               type="text"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => handleFieldChange("name", e.target.value)}
               className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -172,9 +171,7 @@ export function PropertiesPanel({
             </label>
             <select
               value={formData.type}
-              onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
-              }
+              onChange={(e) => handleFieldChange("type", e.target.value)}
               className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {getTypeOptions().map((option) => (
@@ -193,9 +190,7 @@ export function PropertiesPanel({
             <input
               type="color"
               value={formData.color}
-              onChange={(e) =>
-                setFormData({ ...formData, color: e.target.value })
-              }
+              onChange={(e) => handleFieldChange("color", e.target.value)}
               className="w-full h-8 border border-gray-300 rounded-md shadow-sm cursor-pointer"
             />
           </div>
@@ -235,7 +230,7 @@ export function PropertiesPanel({
                 type="number"
                 value={formData.x}
                 onChange={(e) =>
-                  setFormData({ ...formData, x: parseInt(e.target.value) || 0 })
+                  handleFieldChange("x", parseInt(e.target.value) || 0)
                 }
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -248,7 +243,7 @@ export function PropertiesPanel({
                 type="number"
                 value={formData.y}
                 onChange={(e) =>
-                  setFormData({ ...formData, y: parseInt(e.target.value) || 0 })
+                  handleFieldChange("y", parseInt(e.target.value) || 0)
                 }
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -265,10 +260,7 @@ export function PropertiesPanel({
                 type="number"
                 value={formData.width}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    width: parseInt(e.target.value) || 0,
-                  })
+                  handleFieldChange("width", parseInt(e.target.value) || 0)
                 }
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -281,33 +273,32 @@ export function PropertiesPanel({
                 type="number"
                 value={formData.height}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    height: parseInt(e.target.value) || 0,
-                  })
+                  handleFieldChange("height", parseInt(e.target.value) || 0)
                 }
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
 
-          {/* Botões */}
+          {/* Botão de Excluir */}
           <div className="flex gap-2">
             <button
-              onClick={handleUpdate}
-              className="flex-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-            >
-              Atualizar
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="flex-1 px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
             >
               Excluir
             </button>
           </div>
         </div>
       )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      <DeleteElementModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        element={selectedElement}
+      />
     </div>
   );
 }
